@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据导入 - 恒驰泵业财务系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>恒驰泵业财务系统</h1>
+            <nav>
+                <a href="/">首页</a>
+                <a href="/ledger">总账</a>
+                <a href="/monthly">月度账单</a>
+                <a href="/loans">借款管理</a>
+                <a href="/entry">数据录入</a>
+                <a href="/import" class="active">数据导入</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="import-section">
+                <h2>数据导入</h2>
+                <div class="upload-area">
+                    <div class="upload-box">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        <p>直接粘贴CSV内容或制表符分隔的数据到下方文本框</p>
+                        <form id="import-form" class="entry-form">
+                            <div class="form-group full-width">
+                                <label>导入数据 <span class="required">*</span></label>
+                                <textarea name="import-data" rows="15" placeholder="日期,收支分类,明细分类,摘要,金额,备注&#10;2025-03-15,支出,电费,三月电费,2066,备注信息&#10;2025-03-16,入账,货款,客户付款,5000,备注信息"></textarea>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn-secondary" onclick="previewImport()">预览</button>
+                                <button type="submit" class="btn-primary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> 导入数据</button>
+                                <button type="reset" class="btn-secondary" onclick="clearPreview()">清空</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="import-info">
+                    <h3>导入说明</h3>
+                    <ul>
+                        <li>支持CSV格式（逗号分隔）或制表符分隔的数据</li>
+                        <li>数据格式：日期,收支分类,明细分类,金额,摘要,备注</li>
+                        <li>日期格式支持：2025-03-15 或 2025/03/15</li>
+                        <li>收支分类：入账/支出</li>
+                        <li>导入的数据将添加到现有数据库中，不会覆盖已有数据</li>
+                    </ul>
+                </div>
+
+                <div class="batch-preview" id="import-preview" style="display: none;">
+                    <h4>预览</h4>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>日期</th>
+                                    <th>收支分类</th>
+                                    <th>明细分类</th>
+                                    <th>摘要</th>
+                                    <th>金额</th>
+                                    <th>状态</th>
+                                </tr>
+                            </thead>
+                            <tbody id="import-preview-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="import-result" class="import-result" style="display: none;">
+                    <h3>导入结果</h3>
+                    <div id="result-content"></div>
+                    <button class="btn-secondary" onclick="resetImport()">继续导入</button>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 恒驰泵业财务系统</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script>
+        // 预览导入数据
+        function previewImport() {
+            const textarea = document.querySelector('#import-form textarea[name="import-data"]');
+            const data = textarea.value.trim();
+            
+            if (!data) {
+                showToast('请输入导入数据', 'error');
+                return;
+            }
+            
+            const lines = data.split('\n');
+            const previewBody = document.getElementById('import-preview-body');
+            previewBody.innerHTML = '';
+            
+            let validCount = 0;
+            let errorCount = 0;
+            
+            lines.forEach((line, index) => {
+                if (!line.trim()) return;
+                
+                // 跳过表头行
+                if (line.includes('日期') && line.includes('收支分类') && line.includes('明细分类') && line.includes('金额')) {
+                    return;
+                }
+                
+                // 支持制表符、竖线和逗号分隔（CSV格式）
+                const parts = line.split(/\t|\||,/);
+                // 过滤掉空字符串
+                const filteredParts = parts.filter(part => part.trim() !== '');
+                
+                const row = document.createElement('tr');
+                row.className = 'preview-row';
+                
+                if (filteredParts.length >= 5) {
+                    let date = filteredParts[0].trim();
+                    let type = filteredParts[1].trim();
+                    const category = filteredParts[2].trim();
+                    const description = filteredParts[3].trim();
+                    let amountStr = filteredParts[4].trim();
+                    
+                    // 移除金额中的¥符号和其他非数字字符
+                    amountStr = amountStr.replace(/[^0-9.-]/g, '');
+                    
+                    // 确保金额字符串不为空
+                    if (!amountStr) {
+                        row.className = 'preview-row error';
+                        row.innerHTML = `
+                            <td colspan="6" style="text-align: center; color: #ef4444;">金额为空: ${line}</td>
+                        `;
+                        errorCount++;
+                        previewBody.appendChild(row);
+                        return;
+                    }
+                    
+                    // 转换日期格式：2025/1/9 -> 2025-01-09
+                    if (date.includes('/')) {
+                        const dateParts = date.split('/');
+                        if (dateParts.length === 3) {
+                            const year = dateParts[0];
+                            const month = dateParts[1].padStart(2, '0');
+                            const day = dateParts[2].padStart(2, '0');
+                            date = `${year}-${month}-${day}`;
+                        }
+                    }
+                    
+                    // 转换收支分类：保持原分类不变
+                    if (type === '出账') {
+                        type = '出账';
+                    } else if (type === '入账') {
+                        type = '入账';
+                    }
+                    
+                    // 处理金额格式，移除所有逗号
+                    amountStr = amountStr.replace(/,/g, '');
+                    const amount = parseFloat(amountStr);
+                    
+                    // 确保金额为正数
+                    const positiveAmount = Math.abs(amount);
+                    
+                    const isValid = date && type && category && !isNaN(positiveAmount) && positiveAmount > 0;
+                    
+                    row.className = isValid ? 'preview-row success' : 'preview-row error';
+                    row.innerHTML = `
+                        <td>${date}</td>
+                        <td>${type}</td>
+                        <td>${category}</td>
+                        <td>${description}</td>
+                        <td>${isNaN(positiveAmount) ? '无效' : formatAmount(positiveAmount)}</td>
+                        <td>${isValid ? '✓ 有效' : '✗ 无效'}</td>
+                    `;
+                    
+                    if (isValid) validCount++;
+                    else errorCount++;
+                } else {
+                    row.className = 'preview-row error';
+                    row.innerHTML = `
+                        <td colspan="6" style="text-align: center; color: #ef4444;">格式错误: ${line}</td>
+                    `;
+                    errorCount++;
+                }
+                
+                previewBody.appendChild(row);
+            });
+            
+            document.getElementById('import-preview').style.display = 'block';
+            
+            if (errorCount > 0) {
+                showToast(`预览完成: ${validCount}条有效, ${errorCount}条无效`, 'info');
+            } else {
+                showToast(`预览完成: ${validCount}条数据待导入`, 'success');
+            }
+        }
+        
+        // 清空预览
+        function clearPreview() {
+            document.getElementById('import-preview').style.display = 'none';
+            document.getElementById('import-preview-body').innerHTML = '';
+        }
+        
+        // 处理导入提交
+        async function handleImportSubmit(e) {
+            e.preventDefault();
+            
+            const textarea = document.querySelector('#import-form textarea[name="import-data"]');
+            const data = textarea.value.trim();
+            
+            if (!data) {
+                showToast('请输入导入数据', 'error');
+                return;
+            }
+            
+            const lines = data.split('\n');
+            const transactions = [];
+            
+            lines.forEach(line => {
+                if (!line.trim()) return;
+                
+                // 跳过表头行
+                if (line.includes('日期') && line.includes('收支分类') && line.includes('明细分类') && line.includes('金额')) {
+                    return;
+                }
+                
+                // 支持制表符、竖线和逗号分隔（CSV格式）
+                const parts = line.split(/\t|\||,/);
+                // 过滤掉空字符串
+                const filteredParts = parts.filter(part => part.trim() !== '');
+                
+                if (filteredParts.length >= 5) {
+                    let date = filteredParts[0].trim();
+                    let type = filteredParts[1].trim();
+                    const category = filteredParts[2].trim();
+                    const description = filteredParts[3].trim();
+                    let amountStr = filteredParts[4].trim();
+                    
+                    // 移除金额中的¥符号和其他非数字字符
+                    amountStr = amountStr.replace(/[^0-9.-]/g, '');
+                    
+                    // 确保金额字符串不为空
+                    if (!amountStr) continue;
+                    
+                    // 转换日期格式：2025/1/9 -> 2025-01-09
+                    if (date.includes('/')) {
+                        const dateParts = date.split('/');
+                        if (dateParts.length === 3) {
+                            const year = dateParts[0];
+                            const month = dateParts[1].padStart(2, '0');
+                            const day = dateParts[2].padStart(2, '0');
+                            date = `${year}-${month}-${day}`;
+                        }
+                    }
+                    
+                    // 转换收支分类：保持原分类不变
+                    if (type === '出账') {
+                        type = '出账';
+                    } else if (type === '入账') {
+                        type = '入账';
+                    }
+                    
+                    // 处理金额格式，移除所有逗号
+                    amountStr = amountStr.replace(/,/g, '');
+                    const amount = parseFloat(amountStr);
+                    
+                    // 确保金额为正数
+                    const positiveAmount = Math.abs(amount);
+                    
+                    if (date && type && category && !isNaN(positiveAmount) && positiveAmount > 0) {
+                        transactions.push({
+                            date,
+                            type,
+                            category,
+                            amount: positiveAmount,
+                            description
+                        });
+                    }
+                }
+            });
+            
+            if (transactions.length === 0) {
+                showToast('没有有效的数据可以导入', 'error');
+                return;
+            }
+            
+            let successCount = 0;
+            let errorCount = 0;
+            
+            for (const transaction of transactions) {
+                try {
+                    const response = await fetch('/api/transactions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(transaction)
+                    });
+                    
+                    if (response.ok) {
+                        successCount++;
+                    } else {
+                        errorCount++;
+                    }
+                } catch (error) {
+                    errorCount++;
+                }
+            }
+            
+            const resultContent = document.getElementById('result-content');
+            resultContent.innerHTML = `
+                <p>✓ 交易记录: ${successCount} 条</p>
+                <p>✓ 借款记录: 0 条</p>
+                <p>✓ 分配记录: 0 条</p>
+            `;
+            document.getElementById('import-result').style.display = 'block';
+            document.getElementById('import-preview').style.display = 'none';
+            
+            if (errorCount === 0) {
+                showToast(`成功导入 ${successCount} 条记录！`);
+                textarea.value = '';
+            } else {
+                showToast(`导入完成: ${successCount}条成功, ${errorCount}条失败`, 'info');
+            }
+        }
+        
+        // 重置导入
+        function resetImport() {
+            document.getElementById('import-result').style.display = 'none';
+            document.getElementById('import-form').reset();
+        }
+        
+        // 初始化导入页面
+        document.addEventListener('DOMContentLoaded', function() {
+            const importForm = document.getElementById('import-form');
+            if (importForm) {
+                importForm.addEventListener('submit', handleImportSubmit);
+            }
+        });
+    </script>
+</body>
+</html>

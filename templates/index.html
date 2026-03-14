@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>恒驰泵业财务系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>恒驰泵业财务系统</h1>
+            <nav>
+                <a href="/" class="active">首页</a>
+                <a href="/entry">数据录入</a>
+                <a href="/export">数据导出</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="statistics">
+                <h2>财务统计</h2>
+                <div class="stats-grid">
+                    <div class="stat-card income">
+                        <h3>总收入</h3>
+                        <p class="amount" id="total-income">¥0.00</p>
+                    </div>
+                    <div class="stat-card expense">
+                        <h3>总支出</h3>
+                        <p class="amount" id="total-expense">¥0.00</p>
+                    </div>
+                    <div class="stat-card balance">
+                        <h3>结余</h3>
+                        <p class="amount" id="balance">¥0.00</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="filter-section">
+                <h2>筛选条件</h2>
+                <div class="filter-controls">
+                    <input type="date" id="start-date" placeholder="开始日期">
+                    <input type="date" id="end-date" placeholder="结束日期">
+                    <select id="year-filter">
+                        <option value="">全部年份</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                    </select>
+                    <select id="month-filter">
+                        <option value="">全部月份</option>
+                        <option value="1">一月</option>
+                        <option value="2">二月</option>
+                        <option value="3">三月</option>
+                        <option value="4">四月</option>
+                        <option value="5">五月</option>
+                        <option value="6">六月</option>
+                        <option value="7">七月</option>
+                        <option value="8">八月</option>
+                        <option value="9">九月</option>
+                        <option value="10">十月</option>
+                        <option value="11">十一月</option>
+                        <option value="12">十二月</option>
+                    </select>
+                    <select id="type-filter">
+                        <option value="">全部收支</option>
+                        <option value="入账">入账</option>
+                        <option value="出账">出账</option>
+                    </select>
+                    <button onclick="applyFilter()" class="btn-secondary">查询</button>
+                    <button onclick="resetFilter()" class="btn-secondary">重置</button>
+                </div>
+            </section>
+
+            <section class="recent-transactions">
+                <h2>最近交易</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>日期</th>
+                                <th>收支分类</th>
+                                <th>明细分类</th>
+                                <th>摘要</th>
+                                <th>金额</th>
+                                <th>备注</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-table">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 恒驰泵业财务系统</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSummaryData();
+            loadRecentTransactions();
+        });
+        
+        async function loadRecentTransactions() {
+            try {
+                const response = await fetch('/api/transactions?per_page=20');
+                const data = await response.json();
+                
+                const tableBody = document.getElementById('transactions-table');
+                if (tableBody) {
+                    tableBody.innerHTML = '';
+                    
+                    data.transactions.forEach(transaction => {
+                        const row = document.createElement('tr');
+                        const editBtn = document.createElement('button');
+                        editBtn.className = 'btn-primary btn-sm';
+                        editBtn.textContent = '编辑';
+                        editBtn.onclick = function() {
+                            window.location.href = '/entry?edit=' + transaction.id;
+                        };
+                        
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'btn-danger btn-sm';
+                        deleteBtn.textContent = '删除';
+                        deleteBtn.onclick = function() {
+                            confirmDelete(transaction.id);
+                        };
+                        
+                        const actionCell = document.createElement('td');
+                        actionCell.appendChild(editBtn);
+                        actionCell.appendChild(deleteBtn);
+                        
+                        row.innerHTML = `
+                            <td>${formatDate(transaction.date)}</td>
+                            <td><span class="type-badge ${transaction.type}">${transaction.type}</span></td>
+                            <td>${transaction.category || '-'}</td>
+                            <td>${transaction.description || '-'}</td>
+                            <td class="amount ${transaction.type}">${formatAmount(transaction.amount)}</td>
+                            <td>${transaction.remark || '-'}</td>
+                        `;
+                        row.appendChild(actionCell);
+                        tableBody.appendChild(row);
+                    });
+                }
+            } catch (error) {
+                console.error('加载交易记录失败:', error);
+            }
+        }
+        
+        async function confirmDelete(id) {
+            if (confirm('确定要删除这条记录吗？')) {
+                try {
+                    const response = await fetch('/api/transactions/' + id, {
+                        method: 'DELETE'
+                    });
+                    if (response.ok) {
+                        alert('删除成功');
+                        loadSummaryData();
+                        loadRecentTransactions();
+                    } else {
+                        alert('删除失败');
+                    }
+                } catch (error) {
+                    console.error('删除失败:', error);
+                    alert('删除失败');
+                }
+            }
+        }
+        
+        async function loadSummaryData(url = '/api/statistics') {
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (document.getElementById('total-income')) {
+                    document.getElementById('total-income').textContent = formatAmount(data.total_income);
+                }
+                if (document.getElementById('total-expense')) {
+                    document.getElementById('total-expense').textContent = formatAmount(data.total_expense);
+                }
+                if (document.getElementById('balance')) {
+                    document.getElementById('balance').textContent = formatAmount(data.balance);
+                }
+            } catch (error) {
+                console.error('加载统计数据失败:', error);
+            }
+        }
+        
+        function applyFilter() {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const year = document.getElementById('year-filter').value;
+            const month = document.getElementById('month-filter').value;
+            const type = document.getElementById('type-filter').value;
+            
+            let url = '/api/transactions?per_page=20';
+            let statsUrl = '/api/statistics';
+            
+            if (startDate) {
+                url += '&start_date=' + startDate;
+                statsUrl += '?start_date=' + startDate;
+            }
+            if (endDate) {
+                url += '&end_date=' + endDate;
+                statsUrl += (statsUrl.includes('?') ? '&' : '?') + 'end_date=' + endDate;
+            }
+            if (year) {
+                url += '&year=' + year;
+                statsUrl += (statsUrl.includes('?') ? '&' : '?') + 'year=' + year;
+            }
+            if (month) {
+                url += '&month=' + month;
+                statsUrl += (statsUrl.includes('?') ? '&' : '?') + 'month=' + month;
+            }
+            if (type) {
+                url += '&type=' + type;
+                statsUrl += (statsUrl.includes('?') ? '&' : '?') + 'type=' + type;
+            }
+            
+            loadFilteredTransactions(url);
+            loadSummaryData(statsUrl);
+        }
+        
+        async function loadFilteredTransactions(url) {
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                const tableBody = document.getElementById('transactions-table');
+                if (tableBody) {
+                    tableBody.innerHTML = '';
+                    
+                    data.transactions.forEach(transaction => {
+                        const row = document.createElement('tr');
+                        const editBtn = document.createElement('button');
+                        editBtn.className = 'btn-primary btn-sm';
+                        editBtn.textContent = '编辑';
+                        editBtn.onclick = function() {
+                            window.location.href = '/entry?edit=' + transaction.id;
+                        };
+                        
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'btn-danger btn-sm';
+                        deleteBtn.textContent = '删除';
+                        deleteBtn.onclick = function() {
+                            confirmDelete(transaction.id);
+                        };
+                        
+                        const actionCell = document.createElement('td');
+                        actionCell.appendChild(editBtn);
+                        actionCell.appendChild(deleteBtn);
+                        
+                        row.innerHTML = `
+                            <td>${formatDate(transaction.date)}</td>
+                            <td><span class="type-badge ${transaction.type}">${transaction.type}</span></td>
+                            <td>${transaction.category || '-'}</td>
+                            <td class="amount ${transaction.type}">${formatAmount(transaction.amount)}</td>
+                            <td>${transaction.description || '-'}</td>
+                        `;
+                        row.appendChild(actionCell);
+                        tableBody.appendChild(row);
+                    });
+                }
+            } catch (error) {
+                console.error('加载筛选交易记录失败:', error);
+            }
+        }
+        
+        function resetFilter() {
+            document.getElementById('start-date').value = '';
+            document.getElementById('end-date').value = '';
+            document.getElementById('year-filter').value = '';
+            document.getElementById('month-filter').value = '';
+            document.getElementById('type-filter').value = '';
+            loadSummaryData();
+            loadRecentTransactions();
+        }
+    </script>
+</body>
+</html>

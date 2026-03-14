@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据录入 - 恒驰泵业财务系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/entry.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>恒驰泵业财务系统</h1>
+            <nav>
+                <a href="/">首页</a>
+                <a href="/entry" class="active">数据录入</a>
+                <a href="/export">数据导出</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="entry-tabs">
+                <div class="tab-buttons">
+                    <button class="tab-btn active" onclick="switchTab('transaction')">交易录入</button>
+                    <button class="tab-btn" onclick="switchTab('batch')">批量录入</button>
+                </div>
+
+                <!-- 交易录入 -->
+                <div id="transaction-tab" class="tab-content active">
+                    <div class="entry-card">
+                        <h2>交易录入</h2>
+                        <form id="transaction-form" class="entry-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>日期 <span class="required">*</span></label>
+                                    <input type="date" name="date" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>收支分类 <span class="required">*</span></label>
+                                    <select name="type" required>
+                                        <option value="">请选择</option>
+                                        <option value="入账">入账</option>
+                                        <option value="出账">出账</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>明细分类 <span class="required">*</span></label>
+                                    <input type="text" name="category" list="category-list" required placeholder="输入或选择类别">
+                                    <datalist id="category-list">
+                                        <option value="投资款">
+                                        <option value="货款">
+                                        <option value="电费">
+                                        <option value="快递费">
+                                        <option value="工资">
+                                        <option value="充值">
+                                        <option value="设备">
+                                        <option value="材料">
+                                        <option value="费用">
+                                        <option value="房租">
+                                        <option value="其他">
+                                    </datalist>
+                                </div>
+                                <div class="form-group">
+                                    <label>金额 <span class="required">*</span></label>
+                                    <input type="number" name="amount" step="0.01" min="0" required placeholder="0.00">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group full-width">
+                                    <label>摘要 <span class="required">*</span></label>
+                                    <textarea name="description" rows="2" placeholder="请输入摘要..." required></textarea>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group full-width">
+                                    <label>备注</label>
+                                    <textarea name="remark" rows="2" placeholder="请输入备注..."></textarea>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                        <polyline points="7 3 7 8 15 8"></polyline>
+                                    </svg>
+                                    保存交易
+                                </button>
+                                <button type="reset" class="btn-secondary">重置</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="recent-entries">
+                        <h3>最近录入的交易</h3>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>日期</th>
+                                        <th>收支分类</th>
+                                        <th>明细分类</th>
+                                        <th>金额</th>
+                                        <th>摘要</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-transactions">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 批量录入 -->
+                <div id="batch-tab" class="tab-content">
+                    <div class="entry-card">
+                        <h2>批量录入交易</h2>
+                        <p class="hint">每行输入一条记录，格式：日期\t收支分类\t明细分类\t摘要\t金额\t备注（支持制表符、竖线或逗号分隔）</p>
+                        <p class="hint example">示例：2025-03-15\t出账\t电费\t三月电费\t2066\t备注信息</p>
+                        <p class="hint example">示例：2025/03/15|收入|货款|客户付款|5000|备注信息</p>
+                        <p class="hint example">示例：2025-03-15,出账,电费,三月电费,2066,备注信息</p>
+                        
+                        <form id="batch-form" class="entry-form">
+                            <div class="form-group full-width">
+                                <label>批量数据 <span class="required">*</span></label>
+                                <textarea name="batch-data" rows="15" placeholder="2025-03-15|出账|电费|三月电费|2066|备注信息&#10;2025-03-16|收入|货款|客户付款|5000|备注信息&#10;2025-03-17|出账|材料|采购材料|10000|备注信息"></textarea>
+                            </div>
+
+                            <div class="batch-preview" id="batch-preview" style="display: none;">
+                                <h4>预览</h4>
+                                <div class="table-container">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>日期</th>
+                                                <th>收支分类</th>
+                                                <th>明细分类</th>
+                                                <th>摘要</th>
+                                                <th>金额</th>
+                                                <th>备注</th>
+                                                <th>状态</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="preview-body">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="button" class="btn-secondary" onclick="previewBatch()">预览</button>
+                                <button type="submit" class="btn-primary">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                        <polyline points="7 3 7 8 15 8"></polyline>
+                                    </svg>
+                                    批量保存
+                                </button>
+                                <button type="reset" class="btn-secondary" onclick="clearPreview()">清空</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- 编辑弹窗 -->
+        <div id="edit-modal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeEditModal()">&times;</span>
+                <h2>编辑交易</h2>
+                <form id="edit-form" class="entry-form">
+                    <input type="hidden" name="id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>日期 <span class="required">*</span></label>
+                            <input type="date" name="date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>类型 <span class="required">*</span></label>
+                            <select name="type" required>
+                                <option value="">请选择</option>
+                                <option value="入账">入账</option>
+                                <option value="出账">出账</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>明细分类 <span class="required">*</span></label>
+                            <input type="text" name="category" list="category-list-edit" required>
+                            <datalist id="category-list-edit">
+                                <option value="投资款">
+                                <option value="货款">
+                                <option value="电费">
+                                <option value="快递费">
+                                <option value="工资">
+                                <option value="充值">
+                                <option value="设备">
+                                <option value="材料">
+                                <option value="费用">
+                                <option value="房租">
+                                <option value="其他">
+                            </datalist>
+                        </div>
+                        <div class="form-group">
+                            <label>金额 <span class="required">*</span></label>
+                            <input type="number" name="amount" step="0.01" min="0" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label>摘要</label>
+                            <textarea name="description" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label>备注</label>
+                            <textarea name="remark" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">保存修改</button>
+                        <button type="button" class="btn-secondary" onclick="closeEditModal()">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 提示消息 -->
+        <div id="toast" class="toast"></div>
+
+        <footer>
+            <p>&copy; 2025 恒驰泵业财务系统</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/entry.js') }}"></script>
+    <script>
+        window.onload = function() {
+            console.log('Window loaded, initializing entry page');
+            initEntryPage();
+        };
+    </script>
+</body>
+</html>

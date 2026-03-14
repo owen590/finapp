@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>月度账单 - 恒驰泵业财务系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>恒驰泵业财务系统</h1>
+            <nav>
+                <a href="/">首页</a>
+                <a href="/ledger">总账</a>
+                <a href="/monthly" class="active">月度账单</a>
+                <a href="/entry">数据录入</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="filter-section">
+                <h2>选择月份</h2>
+                <div class="filter-controls">
+                    <select id="year-select">
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                    </select>
+                    <select id="month-select">
+                        <option value="1">一月</option>
+                        <option value="2">二月</option>
+                        <option value="3">三月</option>
+                        <option value="4">四月</option>
+                        <option value="5">五月</option>
+                        <option value="6">六月</option>
+                        <option value="7">七月</option>
+                        <option value="8">八月</option>
+                        <option value="9">九月</option>
+                        <option value="10">十月</option>
+                        <option value="11">十一月</option>
+                        <option value="12">十二月</option>
+                    </select>
+                    <button onclick="loadMonthlyData()">查看</button>
+                </div>
+            </section>
+
+            <section class="monthly-stats">
+                <div class="stats-grid">
+                    <div class="stat-card income">
+                        <h3>本月收入</h3>
+                        <p class="amount" id="monthly-income">¥0.00</p>
+                    </div>
+                    <div class="stat-card expense">
+                        <h3>本月支出</h3>
+                        <p class="amount" id="monthly-expense">¥0.00</p>
+                    </div>
+                    <div class="stat-card balance">
+                        <h3>本月结余</h3>
+                        <p class="amount" id="monthly-balance">¥0.00</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="monthly-details">
+                <div class="tab-buttons">
+                    <button class="tab-btn active" onclick="switchTab('income')">入账明细</button>
+                    <button class="tab-btn" onclick="switchTab('expense')">支出明细</button>
+                </div>
+
+                <div id="income-tab" class="tab-content active">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>日期</th>
+                                    <th>明细分类</th>
+                                    <th>金额</th>
+                                    <th>摘要</th>
+                                    <th>备注</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="income-table">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="expense-tab" class="tab-content">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>日期</th>
+                                    <th>明细分类</th>
+                                    <th>金额</th>
+                                    <th>摘要</th>
+                                    <th>备注</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expense-table">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 恒驰泵业财务系统</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script>
+        loadMonthlyData();
+    </script>
+</body>
+</html>
