@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>财务报表 - 恒驰泵业财务系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>恒驰泵业财务系统</h1>
+            <nav>
+                <a href="/">首页</a>
+                <a href="/entry">数据录入</a>
+                <a href="/reports" class="active">报表</a>
+                <a href="/export">数据导出</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="reports-section">
+                <h2>财务报表</h2>
+                
+                <!-- 报表类型选择 -->
+                <div class="report-type-selector">
+                    <div class="report-tabs">
+                        <button class="report-tab active" data-type="daily">日报表</button>
+                        <button class="report-tab" data-type="monthly">月报表</button>
+                        <button class="report-tab" data-type="yearly">年度报表</button>
+                    </div>
+                </div>
+
+                <!-- 筛选条件 -->
+                <div class="report-filters">
+                    <div class="filter-controls">
+                        <input type="date" id="report-date" placeholder="选择日期">
+                        <select id="report-year">
+                            <option value="">选择年份</option>
+                            <option value="2025">2025</option>
+                            <option value="2026">2026</option>
+                        </select>
+                        <select id="report-month">
+                            <option value="">选择月份</option>
+                            <option value="1">一月</option>
+                            <option value="2">二月</option>
+                            <option value="3">三月</option>
+                            <option value="4">四月</option>
+                            <option value="5">五月</option>
+                            <option value="6">六月</option>
+                            <option value="7">七月</option>
+                            <option value="8">八月</option>
+                            <option value="9">九月</option>
+                            <option value="10">十月</option>
+                            <option value="11">十一月</option>
+                            <option value="12">十二月</option>
+                        </select>
+                        <button onclick="generateReport()" class="btn-modern btn-modern-primary">生成报表</button>
+                        <button onclick="exportToPDF()" class="btn-modern btn-modern-secondary" id="export-pdf-btn" disabled>导出PDF</button>
+                    </div>
+                </div>
+
+                <!-- 报表内容区域 -->
+                <div class="report-content">
+                    <!-- 日报表 -->
+                    <div class="report-panel active" id="daily-report">
+                        <div class="report-header">
+                            <h3>日报表</h3>
+                            <p id="daily-date-range">请选择日期生成报表</p>
+                        </div>
+                        <div class="report-body">
+                            <div class="table-container">
+                                <table class="modern-table" id="daily-table">
+                                    <thead>
+                                        <tr>
+                                            <th>时间</th>
+                                            <th>收支分类</th>
+                                            <th>明细分类</th>
+                                            <th>摘要</th>
+                                            <th>入账</th>
+                                            <th>出账</th>
+                                            <th>结余</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="daily-tbody">
+                                        <tr>
+                                            <td colspan="7" style="text-align: center; color: #6b7280;">请选择日期生成日报表</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 月报表 -->
+                    <div class="report-panel" id="monthly-report">
+                        <div class="report-header">
+                            <h3>月报表</h3>
+                            <p id="monthly-date-range">请选择月份生成报表</p>
+                        </div>
+                        <div class="report-body">
+                            <div class="table-container">
+                                <table class="modern-table" id="monthly-table">
+                                    <thead>
+                                        <tr>
+                                            <th>日期</th>
+                                            <th>收支分类</th>
+                                            <th>明细分类</th>
+                                            <th>摘要</th>
+                                            <th>入账</th>
+                                            <th>出账</th>
+                                            <th>结余</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="monthly-tbody">
+                                        <tr>
+                                            <td colspan="7" style="text-align: center; color: #6b7280;">请选择月份生成月报表</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 年度报表 -->
+                    <div class="report-panel" id="yearly-report">
+                        <div class="report-header">
+                            <h3>年度报表</h3>
+                            <p id="yearly-date-range">请选择年份生成报表</p>
+                        </div>
+                        <div class="report-body">
+                            <div class="table-container">
+                                <table class="modern-table" id="yearly-table">
+                                    <thead>
+                                        <tr>
+                                            <th>月份</th>
+                                            <th>入账总额</th>
+                                            <th>出账总额</th>
+                                            <th>结余</th>
+                                            <th>交易笔数</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="yearly-tbody">
+                                        <tr>
+                                            <td colspan="5" style="text-align: center; color: #6b7280;">请选择年份生成年度报表</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/reports.js') }}"></script>
+</body>
+</html>

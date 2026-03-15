@@ -27,15 +27,7 @@ function initEntryPage() {
         loadRecentTransactions();
         if (loanForm) loadRecentLoans();
         
-        // 检查URL中是否有edit参数
-        const url = window.location.href;
-        
-        if (url.includes('edit=')) {
-            const editId = url.split('edit=')[1];
-            if (editId) {
-                loadTransactionForEdit(editId);
-            }
-        }
+        // 不再自动检查URL中的edit参数，编辑交易只通过点击按钮触发
     } catch (error) {
         console.error('initEntryPage执行错误:', error);
     }
@@ -183,8 +175,8 @@ function renderRecentTransactions() {
             <td>${formatDateTime(transaction.created_at)}</td>
             <td><span class="type-badge ${transaction.type}">${transaction.type}</span></td>
             <td>${transaction.category || '-'}</td>
-            <td class="amount ${transaction.type}">${formatAmount(transaction.amount)}</td>
             <td>${transaction.description || '-'}</td>
+            <td class="amount ${transaction.type}">${formatAmount(transaction.amount)}</td>
             <td>
                 <div class="action-btns">
                     <button class="btn-edit" onclick="editTransaction(${transaction.id})">编辑</button>

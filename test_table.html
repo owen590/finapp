@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试表格</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        table th,
+        table td {
+            padding: 12px;
+            text-align: left;
+            vertical-align: middle;
+            border: 1px solid #ddd;
+        }
+        table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        /* 日期列 */
+        table th:nth-child(1),
+        table td:nth-child(1) {
+            width: 12%;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        /* 收支分类列 */
+        table th:nth-child(2),
+        table td:nth-child(2) {
+            width: 10%;
+            text-align: center;
+        }
+        /* 明细分类列 */
+        table th:nth-child(3),
+        table td:nth-child(3) {
+            width: 12%;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        /* 摘要列 */
+        table th:nth-child(4),
+        table td:nth-child(4) {
+            width: 25%;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        /* 金额列 */
+        table th:nth-child(5),
+        table td:nth-child(5) {
+            width: 12%;
+            text-align: right;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        /* 备注列 */
+        table th:nth-child(6),
+        table td:nth-child(6) {
+            width: 15%;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        /* 操作列 */
+        table th:nth-child(7),
+        table td:nth-child(7) {
+            width: 14%;
+            text-align: right;
+        }
+        .table-actions {
+            display: flex;
+            gap: 5px;
+            justify-content: flex-end;
+            width: 100%;
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+        <h2>测试表格</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>日期</th>
+                    <th>收支分类</th>
+                    <th>明细分类</th>
+                    <th>摘要</th>
+                    <th>金额</th>
+                    <th>备注</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>2026-03-04</td>
+                    <td>入账</td>
+                    <td>收入-线下</td>
+                    <td>两台清洗机</td>
+                    <td>356.0</td>
+                    <td></td>
+                    <td>
+                        <div class="table-actions">
+                            <button class="btn-sm btn-primary">编辑</button>
+                            <button class="btn-sm btn-danger">删除</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>2026-03-04</td>
+                    <td>出账</td>
+                    <td>费用</td>
+                    <td>圆通快递费</td>
+                    <td>28.0</td>
+                    <td></td>
+                    <td>
+                        <div class="table-actions">
+                            <button class="btn-sm btn-primary">编辑</button>
+                            <button class="btn-sm btn-danger">删除</button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

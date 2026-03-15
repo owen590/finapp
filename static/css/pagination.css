@@ -1,0 +1,104 @@
+/* 通用分页控件样式 */
+.pagination-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+    padding: 15px;
+    flex-wrap: wrap;
+}
+
+.page-btn {
+    padding: 8px 16px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+    min-width: 70px;
+}
+
+.page-btn:hover:not(:disabled) {
+    background: #5568d3;
+    transform: translateY(-2px);
+}
+
+.page-btn:disabled {
+    background: #d1d5db;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.page-numbers {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.page-number-btn {
+    padding: 6px 12px;
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.3s;
+    min-width: 36px;
+    text-align: center;
+}
+
+.page-number-btn:hover:not(.active) {
+    background: #e5e7eb;
+}
+
+.page-number-btn.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.page-jump-select {
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+    cursor: pointer;
+    min-width: 100px;
+}
+
+.page-jump-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .pagination-wrapper {
+        gap: 5px;
+        padding: 10px;
+    }
+    
+    .page-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+        min-width: 60px;
+    }
+    
+    .page-number-btn {
+        padding: 5px 10px;
+        font-size: 12px;
+        min-width: 32px;
+    }
+    
+    .page-jump-select {
+        padding: 6px 10px;
+        font-size: 12px;
+        min-width: 90px;
+    }
+}

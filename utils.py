@@ -131,8 +131,10 @@ def import_from_excel(file_path):
                 if len(row) > 0 and row[0].value:
                     date = parse_date(row[0].value)
                     if date:
-                        category = row[1].value if len(row) > 1 and row[1].value else ''
+                        # 修正：第2列是摘要，第3列是金额
+                        description = row[1].value if len(row) > 1 and row[1].value else ''
                         amount = safe_float(row[2].value) if len(row) > 2 else 0
+                        category = description  # 使用摘要作为分类
                         
                         if amount > 0:
                             transaction = Transaction(
@@ -140,7 +142,7 @@ def import_from_excel(file_path):
                                 type='支出',
                                 category=str(category),
                                 amount=amount,
-                                description=str(category),
+                                description=str(description),
                                 month=date.month,
                                 year=date.year
                             )
@@ -149,8 +151,10 @@ def import_from_excel(file_path):
                 if len(row) > 4 and row[4].value:
                     date = parse_date(row[4].value)
                     if date:
-                        category = row[5].value if len(row) > 5 and row[5].value else ''
+                        # 修正：第6列是摘要，第7列是金额
+                        description = row[5].value if len(row) > 5 and row[5].value else ''
                         amount = safe_float(row[6].value) if len(row) > 6 else 0
+                        category = description  # 使用摘要作为分类
                         
                         if amount > 0:
                             transaction = Transaction(
@@ -158,7 +162,7 @@ def import_from_excel(file_path):
                                 type='入账',
                                 category=str(category),
                                 amount=amount,
-                                description=str(category),
+                                description=str(description),
                                 month=date.month,
                                 year=date.year
                             )
@@ -167,8 +171,10 @@ def import_from_excel(file_path):
                 if len(row) > 8 and row[8].value:
                     date = parse_date(row[8].value)
                     if date:
-                        category = row[9].value if len(row) > 9 and row[9].value else ''
+                        # 修正：第10列是摘要，第11列是金额
+                        description = row[9].value if len(row) > 9 and row[9].value else ''
                         amount = safe_float(row[10].value) if len(row) > 10 else 0
+                        category = description  # 使用摘要作为分类
                         
                         if amount > 0:
                             transaction = Transaction(
@@ -176,7 +182,7 @@ def import_from_excel(file_path):
                                 type='支出',
                                 category=str(category),
                                 amount=amount,
-                                description=str(category),
+                                description=str(description),
                                 month=date.month,
                                 year=date.year
                             )
@@ -189,8 +195,10 @@ def import_from_excel(file_path):
                 if len(row) > 0 and row[0].value:
                     date = parse_date(row[0].value)
                     if date:
-                        category = row[1].value if len(row) > 1 and row[1].value else ''
+                        # 修正：第2列是摘要，第3列是金额
+                        description = row[1].value if len(row) > 1 and row[1].value else ''
                         amount = safe_float(row[2].value) if len(row) > 2 else 0
+                        category = description  # 使用摘要作为分类
                         
                         if amount > 0:
                             transaction = Transaction(
@@ -198,7 +206,7 @@ def import_from_excel(file_path):
                                 type='支出',
                                 category=str(category),
                                 amount=amount,
-                                description=str(category),
+                                description=str(description),
                                 month=date.month,
                                 year=date.year
                             )
@@ -207,8 +215,10 @@ def import_from_excel(file_path):
                 if len(row) > 4 and row[4].value:
                     date = parse_date(row[4].value)
                     if date:
-                        category = row[5].value if len(row) > 5 and row[5].value else ''
+                        # 修正：第6列是摘要，第7列是金额
+                        description = row[5].value if len(row) > 5 and row[5].value else ''
                         amount = safe_float(row[6].value) if len(row) > 6 else 0
+                        category = description  # 使用摘要作为分类
                         
                         if amount > 0:
                             transaction = Transaction(
@@ -216,7 +226,7 @@ def import_from_excel(file_path):
                                 type='入账',
                                 category=str(category),
                                 amount=amount,
-                                description=str(category),
+                                description=str(description),
                                 month=date.month,
                                 year=date.year
                             )

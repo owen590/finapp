@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>恒驰泵业财务系统</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/entry.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pagination.css') }}">
 </head>
 <body>
     <div class="container">
@@ -13,25 +15,26 @@
             <nav>
                 <a href="/" class="active">首页</a>
                 <a href="/entry">数据录入</a>
+                <a href="/reports">报表</a>
                 <a href="/export">数据导出</a>
             </nav>
         </header>
 
         <main>
-            <section class="statistics">
+            <section class="stats-section">
                 <h2>财务统计</h2>
                 <div class="stats-grid">
                     <div class="stat-card income">
-                        <h3>总收入</h3>
-                        <p class="amount" id="total-income">¥0.00</p>
+                        <div class="stat-value" id="total-income">¥0.00</div>
+                        <div class="stat-label">总收入</div>
                     </div>
                     <div class="stat-card expense">
-                        <h3>总支出</h3>
-                        <p class="amount" id="total-expense">¥0.00</p>
+                        <div class="stat-value" id="total-expense">¥0.00</div>
+                        <div class="stat-label">总支出</div>
                     </div>
                     <div class="stat-card balance">
-                        <h3>结余</h3>
-                        <p class="amount" id="balance">¥0.00</p>
+                        <div class="stat-value" id="balance">¥0.00</div>
+                        <div class="stat-label">结余</div>
                     </div>
                 </div>
             </section>
@@ -90,24 +93,94 @@
                         </tbody>
                     </table>
                 </div>
+                <!-- 分页控件 -->
+                <div id="pagination-container"></div>
             </section>
         </main>
 
-        <footer>
-            <p>&copy; 2025 恒驰泵业财务系统</p>
         </footer>
     </div>
 
+    <!-- 编辑弹窗 -->
+    <div id="edit-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h2>编辑交易</h2>
+            <form id="edit-form" class="entry-form">
+                <input type="hidden" name="id">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>日期 <span class="required">*</span></label>
+                        <input type="date" name="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>类型 <span class="required">*</span></label>
+                        <select name="type" required>
+                            <option value="">请选择</option>
+                            <option value="入账">入账</option>
+                            <option value="出账">出账</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>明细分类 <span class="required">*</span></label>
+                        <input type="text" name="category" list="category-list-edit" required placeholder="输入或选择类别">
+                        <datalist id="category-list-edit">
+                            <option value="投资款">
+                            <option value="货款">
+                            <option value="电费">
+                            <option value="快递费">
+                            <option value="工资">
+                            <option value="充值">
+                            <option value="设备">
+                            <option value="材料">
+                            <option value="费用">
+                            <option value="房租">
+                            <option value="其他">
+                        </datalist>
+                    </div>
+                    <div class="form-group">
+                        <label>金额 <span class="required">*</span></label>
+                        <input type="number" name="amount" step="0.01" min="0" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label>摘要</label>
+                        <textarea name="description" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label>备注</label>
+                        <textarea name="remark" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">保存修改</button>
+                    <button type="button" class="btn-secondary" onclick="closeEditModal()">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 提示消息 -->
+    <div id="toast" class="toast"></div>
+
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/pagination.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            loadSummaryData();
-            loadRecentTransactions();
+            // 加载保存的筛选条件
+            loadSavedFilter();
+            // 应用筛选条件
+            applyFilter();
         });
         
         async function loadRecentTransactions() {
             try {
-                const response = await fetch('/api/transactions?per_page=20');
+                const response = await fetch('/api/transactions?per_page=50');
                 const data = await response.json();
                 
                 const tableBody = document.getElementById('transactions-table');
@@ -120,7 +193,7 @@
                         editBtn.className = 'btn-primary btn-sm';
                         editBtn.textContent = '编辑';
                         editBtn.onclick = function() {
-                            window.location.href = '/entry?edit=' + transaction.id;
+                            loadTransactionForEdit(transaction.id);
                         };
                         
                         const deleteBtn = document.createElement('button');
@@ -131,8 +204,11 @@
                         };
                         
                         const actionCell = document.createElement('td');
-                        actionCell.appendChild(editBtn);
-                        actionCell.appendChild(deleteBtn);
+                        const actionsContainer = document.createElement('div');
+                        actionsContainer.className = 'table-actions';
+                        actionsContainer.appendChild(editBtn);
+                        actionsContainer.appendChild(deleteBtn);
+                        actionCell.appendChild(actionsContainer);
                         
                         row.innerHTML = `
                             <td>${formatDate(transaction.date)}</td>
@@ -146,6 +222,9 @@
                         tableBody.appendChild(row);
                     });
                 }
+                
+                // 初始化分页控件
+                initPagination(data.current_page, data.pages);
             } catch (error) {
                 console.error('加载交易记录失败:', error);
             }
@@ -197,7 +276,10 @@
             const month = document.getElementById('month-filter').value;
             const type = document.getElementById('type-filter').value;
             
-            let url = '/api/transactions?per_page=20';
+            // 保存筛选条件
+            saveFilter();
+            
+            let url = '/api/transactions?per_page=50&page=1';
             let statsUrl = '/api/statistics';
             
             if (startDate) {
@@ -240,7 +322,7 @@
                         editBtn.className = 'btn-primary btn-sm';
                         editBtn.textContent = '编辑';
                         editBtn.onclick = function() {
-                            window.location.href = '/entry?edit=' + transaction.id;
+                            loadTransactionForEdit(transaction.id);
                         };
                         
                         const deleteBtn = document.createElement('button');
@@ -251,20 +333,27 @@
                         };
                         
                         const actionCell = document.createElement('td');
-                        actionCell.appendChild(editBtn);
-                        actionCell.appendChild(deleteBtn);
+                        const actionsContainer = document.createElement('div');
+                        actionsContainer.className = 'table-actions';
+                        actionsContainer.appendChild(editBtn);
+                        actionsContainer.appendChild(deleteBtn);
+                        actionCell.appendChild(actionsContainer);
                         
                         row.innerHTML = `
                             <td>${formatDate(transaction.date)}</td>
                             <td><span class="type-badge ${transaction.type}">${transaction.type}</span></td>
                             <td>${transaction.category || '-'}</td>
-                            <td class="amount ${transaction.type}">${formatAmount(transaction.amount)}</td>
                             <td>${transaction.description || '-'}</td>
+                            <td class="amount ${transaction.type}">${formatAmount(transaction.amount)}</td>
+                            <td>${transaction.remark || '-'}</td>
                         `;
                         row.appendChild(actionCell);
                         tableBody.appendChild(row);
                     });
                 }
+                
+                // 初始化分页控件
+                initPagination(data.current_page, data.pages);
             } catch (error) {
                 console.error('加载筛选交易记录失败:', error);
             }
@@ -276,8 +365,166 @@
             document.getElementById('year-filter').value = '';
             document.getElementById('month-filter').value = '';
             document.getElementById('type-filter').value = '';
+            // 清除保存的筛选条件
+            localStorage.removeItem('filter');
             loadSummaryData();
             loadRecentTransactions();
+        }
+        
+        // 保存筛选条件到localStorage
+        function saveFilter() {
+            const filter = {
+                startDate: document.getElementById('start-date').value,
+                endDate: document.getElementById('end-date').value,
+                year: document.getElementById('year-filter').value,
+                month: document.getElementById('month-filter').value,
+                type: document.getElementById('type-filter').value
+            };
+            localStorage.setItem('filter', JSON.stringify(filter));
+        }
+        
+        // 从localStorage加载筛选条件
+        function loadSavedFilter() {
+            const savedFilter = localStorage.getItem('filter');
+            if (savedFilter) {
+                const filter = JSON.parse(savedFilter);
+                document.getElementById('start-date').value = filter.startDate || '';
+                document.getElementById('end-date').value = filter.endDate || '';
+                document.getElementById('year-filter').value = filter.year || '';
+                document.getElementById('month-filter').value = filter.month || '';
+                document.getElementById('type-filter').value = filter.type || '';
+            }
+        }
+        
+        // 分页控件实例
+        let pagination = null;
+        
+        // 初始化分页控件
+        function initPagination(currentPage, totalPages) {
+            if (pagination) {
+                pagination.update(currentPage, totalPages);
+            } else {
+                pagination = new Pagination('pagination-container', {
+                    currentPage: currentPage,
+                    totalPages: totalPages,
+                    pageSize: 50,
+                    onPageChange: function(page) {
+                        loadPageData(page);
+                    }
+                });
+            }
+        }
+        
+        // 加载指定页的数据
+        function loadPageData(page) {
+            // 获取当前筛选条件
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const year = document.getElementById('year-filter').value;
+            const month = document.getElementById('month-filter').value;
+            const type = document.getElementById('type-filter').value;
+            
+            let url = `/api/transactions?per_page=50&page=${page}`;
+            
+            if (startDate) url += '&start_date=' + startDate;
+            if (endDate) url += '&end_date=' + endDate;
+            if (year) url += '&year=' + year;
+            if (month) url += '&month=' + month;
+            if (type) url += '&type=' + type;
+            
+            loadFilteredTransactions(url);
+        }
+        
+        // 加载交易信息用于编辑
+        async function loadTransactionForEdit(id) {
+            try {
+                const response = await fetch('/api/transactions/' + id);
+                if (response.ok) {
+                    const transaction = await response.json();
+                    openEditModal(transaction);
+                }
+            } catch (error) {
+                console.error('加载交易失败:', error);
+                showToast('加载交易失败', 'error');
+            }
+        }
+        
+        // 打开编辑弹窗
+        function openEditModal(transaction) {
+            document.querySelector('#edit-form input[name="id"]').value = transaction.id;
+            document.querySelector('#edit-form input[name="date"]').value = transaction.date;
+            document.querySelector('#edit-form select[name="type"]').value = transaction.type;
+            document.querySelector('#edit-form input[name="category"]').value = transaction.category || '';
+            document.querySelector('#edit-form input[name="amount"]').value = transaction.amount;
+            document.querySelector('#edit-form textarea[name="description"]').value = transaction.description || '';
+            document.querySelector('#edit-form textarea[name="remark"]').value = transaction.remark || '';
+            
+            document.getElementById('edit-modal').style.display = 'block';
+        }
+        
+        // 关闭编辑弹窗
+        function closeEditModal() {
+            document.getElementById('edit-modal').style.display = 'none';
+        }
+        
+        // 处理编辑表单提交
+        async function handleEditSubmit(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            const id = data.id;
+            delete data.id;
+            
+            try {
+                const response = await fetch(`/api/transactions/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    showToast('修改成功！');
+                    closeEditModal();
+                    loadSummaryData();
+                    applyFilter();
+                } else {
+                    showToast('修改失败，请重试', 'error');
+                }
+            } catch (error) {
+                console.error('修改交易失败:', error);
+                showToast('修改失败，请检查网络连接', 'error');
+            }
+        }
+        
+        // 显示提示消息
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast ' + type;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        // 绑定编辑表单提交事件
+        document.addEventListener('DOMContentLoaded', function() {
+            const editForm = document.getElementById('edit-form');
+            if (editForm) {
+                editForm.addEventListener('submit', handleEditSubmit);
+            }
+        });
+        
+        // 点击弹窗外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('edit-modal');
+            if (event.target === modal) {
+                closeEditModal();
+            }
         }
     </script>
 </body>

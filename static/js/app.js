@@ -59,8 +59,8 @@ async function loadTransactions(page = 1) {
                     <td>${formatDate(transaction.date)}</td>
                     <td><span class="type-badge ${transaction.type}">${transaction.type}</span></td>
                     <td>${transaction.category || '-'}</td>
-                    <td class="amount ${transaction.type}">${formatAmount(transaction.amount)}</td>
                     <td>${transaction.description || '-'}</td>
+                    <td class="amount ${transaction.type}">${formatAmount(transaction.amount)}</td>
                     <td>${transaction.remark || '-'}</td>
                     <td>
                         <button class="btn-primary btn-sm" onclick="editTransaction(${transaction.id})">编辑</button>
