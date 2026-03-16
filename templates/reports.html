@@ -8,6 +8,16 @@
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/zui@1.11.0/dist/css/zui.min.css">
     <script src="https://cdn.jsdelivr.net/npm/zui@1.11.0/dist/js/zui.min.js"></script>
+    <style>
+        .chart-box { margin-bottom: 24px; }
+        .chart-box > div { width: 100% !important; }
+        @media (min-width: 768px) {
+            #yearly-trend-chart { height: 400px !important; }
+            #income-pie-chart, #expense-pie-chart { height: 350px !important; }
+            #yearly-chart { height: 400px !important; }
+            #monthly-income-chart, #monthly-expense-chart { height: 300px !important; }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -491,6 +501,14 @@
             setTimeout(() => {
                 initCharts();
                 renderYearlyChart(data);
+                // 图表分析页手动触发resize
+                if (currentReportType === 'chart') {
+                    setTimeout(() => {
+                        yearlyTrendChart && yearlyTrendChart.resize();
+                        incomePieChart && incomePieChart.resize();
+                        expensePieChart && expensePieChart.resize();
+                    }, 200);
+                }
             }, 100);
         };
 
@@ -502,6 +520,8 @@
             setTimeout(() => {
                 initCharts();
                 renderMonthlyCharts(data);
+                monthlyIncomeChart && monthlyIncomeChart.resize();
+                monthlyExpenseChart && monthlyExpenseChart.resize();
             }, 100);
         };
     </script>
