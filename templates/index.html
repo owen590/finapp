@@ -11,6 +11,22 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/entry.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pagination.css') }}">
     <style>
+        /* 金融专业配色 - Professional Financial Colors */
+        :root {
+            --primary: #1a365d;        /* 深海军蓝 - 专业稳重 */
+            --primary-light: #2c5282;
+            --accent: #3182ce;         /* 蓝色强调 */
+            --success: #047857;        /* 墨绿 - 收入 */
+            --danger: #c53030;         /* 深红 - 支出 */
+            --warning: #d69e2e;       /* 金色 - 警告 */
+            --gray-50: #f7fafc;
+            --gray-100: #edf2f7;
+            --gray-200: #e2e8f0;
+            --gray-500: #718096;
+            --gray-700: #2d3748;
+            --gray-900: #1a202c;
+        }
+        
         /* 响应式布局 */
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: 1fr !important; }
@@ -23,18 +39,23 @@
             .table-container { overflow-x: auto; }
         }
         
+        body { 
+            background: var(--gray-50); 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
         .stat-card { 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-            border-radius: 16px; padding: 24px; color: white; text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15); transition: transform 0.3s;
+            background: var(--primary);
+            border-radius: 8px; padding: 24px; color: white; text-align: center;
+            box-shadow: 0 4px 12px rgba(26, 54, 93, 0.15); transition: transform 0.2s, box-shadow 0.2s;
         }
-        .stat-card:hover { transform: translateY(-5px); }
-        .stat-card.income { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
-        .stat-card.expense { background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%); }
-        .stat-card.balance { background: linear-gradient(135deg, #4776E6 0%, #8E54E9 100%); }
-        .stat-value { font-size: 32px; font-weight: bold; margin-bottom: 8px; }
-        .stat-label { font-size: 16px; opacity: 0.9; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(26, 54, 93, 0.2); }
+        .stat-card.income { background: var(--success); }
+        .stat-card.expense { background: var(--danger); }
+        .stat-card.balance { background: var(--primary); }
+        .stat-value { font-size: 28px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.5px; }
+        .stat-label { font-size: 14px; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px; }
         
         .chart-section { margin-bottom: 30px; }
         .chart-section .row { display: flex; flex-wrap: wrap; }
@@ -47,43 +68,46 @@
             .chart-section .col-md-4 { flex: 0 0 33.33%; max-width: 33.33%; }
         }
         .chart-card { 
-            background: white; border-radius: 16px; padding: 20px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            background: white; border-radius: 8px; padding: 20px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid var(--gray-200);
         }
-        .chart-title { font-size: 18px; font-weight: 600; margin-bottom: 15px; color: #333; }
+        .chart-title { font-size: 16px; font-weight: 600; margin-bottom: 15px; color: var(--gray-900); border-left: 3px solid var(--primary); padding-left: 12px; }
         
         .table-actions { display: flex; gap: 8px; }
-        .table-actions .btn { padding: 4px 12px; font-size: 12px; }
+        .table-actions .btn { padding: 4px 12px; font-size: 12px; border-radius: 4px; }
         
-        /* 增强的表格样式 */
+        /* 表格样式 */
         .table-container { 
-            background: white; border-radius: 12px; overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            background: white; border-radius: 8px; overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid var(--gray-200);
         }
         .table thead th { 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--primary);
             color: white; border: none; padding: 14px;
+            font-weight: 500; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;
         }
-        .table tbody tr:hover { background: #f8f9ff; }
-        .table tbody td { padding: 12px; border-color: #eee; }
+        .table tbody tr:hover { background: var(--gray-50); }
+        .table tbody td { padding: 12px; border-color: var(--gray-200); }
         
         .type-badge { 
-            padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;
+            padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 500;
         }
-        .type-badge.入账 { background: #e8f8f0; color: #11998e; }
-        .type-badge.出账 { background: #fde8e8; color: #eb3349; }
+        .type-badge.入账 { background: #d1fae5; color: var(--success); }
+        .type-badge.出账 { background: #fee2e2; color: var(--danger); }
         
-        .amount.入账 { color: #11998e; font-weight: 600; }
-        .amount.出账 { color: #eb3349; font-weight: 600; }
+        .amount.入账 { color: var(--success); font-weight: 600; }
+        .amount.出账 { color: var(--danger); font-weight: 600; }
         
         /* Quick date filters */
         .quick-filters { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .quick-filter { 
-            padding: 8px 16px; border-radius: 20px; border: 1px solid #ddd;
-            background: white; cursor: pointer; transition: all 0.3s;
+            padding: 8px 16px; border-radius: 4px; border: 1px solid var(--gray-200);
+            background: white; cursor: pointer; transition: all 0.2s; font-size: 13px;
         }
         .quick-filter:hover, .quick-filter.active { 
-            background: #667eea; color: white; border-color: #667eea;
+            background: var(--primary); color: white; border-color: var(--primary);
         }
     </style>
 </head>
