@@ -595,15 +595,22 @@ def export_pdf():
         
         # 注册中文字体
         try:
-            # 尝试使用系统字体
-            font_path = "C:\\Windows\\Fonts\\simsun.ttc"  # 宋体
-            if os.path.exists(font_path):
-                pdfmetrics.registerFont(TTFont('SimSun', font_path))
-                chinese_font = 'SimSun'
+            # 使用Linux中文字体
+            font_paths = [
+                '/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc',
+                '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc',
+                '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc'
+            ]
+            chinese_font = 'WenQuanYi'
+            for font_path in font_paths:
+                if os.path.exists(font_path):
+                    pdfmetrics.registerFont(TTFont('WenQuanYi', font_path))
+                    chinese_font = 'WenQuanYi'
+                    break
             else:
-                # 如果没有系统字体，使用reportlab默认字体
                 chinese_font = 'Helvetica'
-        except:
+        except Exception as e:
+            print(f"Font error: {e}")
             chinese_font = 'Helvetica'
         
         # 创建PDF内存缓冲区
