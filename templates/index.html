@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>恒驰泵业财务系统</title>
+    <!-- ZUI 3 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/zui@3/dist/css/zui.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/entry.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pagination.css') }}">
@@ -14,9 +16,9 @@
             <h1>恒驰泵业财务系统</h1>
             <nav>
                 <a href="/" class="active">首页</a>
-                <a href="/entry">数据录入</a>
+                <a href="/entry">录入</a>
                 <a href="/reports">报表</a>
-                <a href="/export">数据导出</a>
+                <a href="/export">导出</a>
             </nav>
         </header>
 
@@ -69,15 +71,15 @@
                         <option value="入账">入账</option>
                         <option value="出账">出账</option>
                     </select>
-                    <button onclick="applyFilter()" class="btn-secondary">查询</button>
-                    <button onclick="resetFilter()" class="btn-secondary">重置</button>
+                    <button onclick="applyFilter()" class="btn btn-primary">查询</button>
+                    <button onclick="resetFilter()" class="btn btn-secondary">重置</button>
                 </div>
             </section>
 
             <section class="recent-transactions">
                 <h2>最近交易</h2>
                 <div class="table-container">
-                    <table>
+                    <table class="table">
                         <thead>
                             <tr>
                                 <th>日期</th>
