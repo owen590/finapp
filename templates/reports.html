@@ -501,14 +501,16 @@
             setTimeout(() => {
                 initCharts();
                 renderYearlyChart(data);
-                // 图表分析页手动触发resize
-                if (currentReportType === 'chart') {
-                    setTimeout(() => {
+                // 年度报表页手动触发resize
+                setTimeout(() => {
+                    yearlyChart && yearlyChart.resize();
+                    // 图表分析页额外触发其他图表
+                    if (currentReportType === 'chart') {
                         yearlyTrendChart && yearlyTrendChart.resize();
                         incomePieChart && incomePieChart.resize();
                         expensePieChart && expensePieChart.resize();
-                    }, 200);
-                }
+                    }
+                }, 200);
             }, 100);
         };
 
