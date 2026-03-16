@@ -31,6 +31,23 @@ function initializeReportTabs() {
             
             // 清除之前的数据
             clearReportData();
+            
+            // 图表分析页面自动加载年度报表数据
+            if (reportType === 'chart') {
+                // 设置为年度报表并自动加载
+                currentReportType = 'yearly';
+                const yearSelect = document.getElementById('report-year');
+                if (yearSelect.value) {
+                    generateReport();
+                } else {
+                    // 如果没有选年份，使用当前年份
+                    const currentYear = new Date().getFullYear();
+                    yearSelect.value = currentYear;
+                    generateReport();
+                }
+                // 恢复chart类型
+                currentReportType = 'chart';
+            }
         });
     });
 }
@@ -82,6 +99,9 @@ async function generateReport() {
     let url = '/api/reports';
     let params = [];
     
+    // 图表分析使用年度报表数据
+    const apiType = reportType === 'chart' ? 'yearly' : reportType;
+    
     // 根据报表类型构建参数
     switch(reportType) {
         case 'daily':
@@ -107,6 +127,7 @@ async function generateReport() {
             break;
             
         case 'yearly':
+        case 'chart':
             const yearOnly = document.getElementById('report-year').value;
             if (!yearOnly) {
                 showToast('请选择年份', 'error');
