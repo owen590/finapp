@@ -5,66 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>恒驰泵业财务系统</title>
     <!-- ZUI 3 CDN -->
-    <link href="https://cdn.jsdelivr.net/npm/zui@1.11.0/dist/css/zui.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/zui@3/dist/css/zui.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/entry.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pagination.css') }}">
-    <style>
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
-        .stat-card { 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-            border-radius: 16px; padding: 24px; color: white; text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15); transition: transform 0.3s;
-        }
-        .stat-card:hover { transform: translateY(-5px); }
-        .stat-card.income { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
-        .stat-card.expense { background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%); }
-        .stat-card.balance { background: linear-gradient(135deg, #4776E6 0%, #8E54E9 100%); }
-        .stat-value { font-size: 32px; font-weight: bold; margin-bottom: 8px; }
-        .stat-label { font-size: 16px; opacity: 0.9; }
-        
-        .chart-section { margin-bottom: 30px; }
-        .chart-card { 
-            background: white; border-radius: 16px; padding: 20px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        }
-        .chart-title { font-size: 18px; font-weight: 600; margin-bottom: 15px; color: #333; }
-        
-        .table-actions { display: flex; gap: 8px; }
-        .table-actions .btn { padding: 4px 12px; font-size: 12px; }
-        
-        /* 增强的表格样式 */
-        .table-container { 
-            background: white; border-radius: 12px; overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        }
-        .table thead th { 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white; border: none; padding: 14px;
-        }
-        .table tbody tr:hover { background: #f8f9ff; }
-        .table tbody td { padding: 12px; border-color: #eee; }
-        
-        .type-badge { 
-            padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;
-        }
-        .type-badge.入账 { background: #e8f8f0; color: #11998e; }
-        .type-badge.出账 { background: #fde8e8; color: #eb3349; }
-        
-        .amount.入账 { color: #11998e; font-weight: 600; }
-        .amount.出账 { color: #eb3349; font-weight: 600; }
-        
-        /* Quick date filters */
-        .quick-filters { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .quick-filter { 
-            padding: 8px 16px; border-radius: 20px; border: 1px solid #ddd;
-            background: white; cursor: pointer; transition: all 0.3s;
-        }
-        .quick-filter:hover, .quick-filter.active { 
-            background: #667eea; color: white; border-color: #667eea;
-        }
-    </style>
 </head>
 <body>
     <div class="container">
@@ -79,9 +23,8 @@
         </header>
 
         <main>
-            <!-- 统计卡片 -->
             <section class="stats-section">
-                <h2>财务概览</h2>
+                <h2>财务统计</h2>
                 <div class="stats-grid">
                     <div class="stat-card income">
                         <div class="stat-value" id="total-income">¥0.00</div>
@@ -98,33 +41,8 @@
                 </div>
             </section>
 
-            <!-- 图表区域 -->
-            <section class="chart-section">
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="chart-card">
-                            <div class="chart-title">收支趋势（近6个月）</div>
-                            <div id="trend-chart" style="width: 100%; height: 300px;"></div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="chart-card">
-                            <div class="chart-title">收支构成</div>
-                            <div id="pie-chart" style="width: 100%; height: 300px;"></div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 筛选条件 -->
             <section class="filter-section">
                 <h2>筛选条件</h2>
-                <div class="quick-filters">
-                    <button class="quick-filter" onclick="setQuickFilter('today')">今天</button>
-                    <button class="quick-filter" onclick="setQuickFilter('week')">本周</button>
-                    <button class="quick-filter" onclick="setQuickFilter('month')">本月</button>
-                    <button class="quick-filter" onclick="setQuickFilter('year')">本年</button>
-                </div>
                 <div class="filter-controls">
                     <input type="date" id="start-date" placeholder="开始日期">
                     <input type="date" id="end-date" placeholder="结束日期">
@@ -158,16 +76,15 @@
                 </div>
             </section>
 
-            <!-- 交易列表 -->
             <section class="recent-transactions">
-                <h2>交易记录</h2>
+                <h2>最近交易</h2>
                 <div class="table-container">
                     <table class="table">
                         <thead>
                             <tr>
                                 <th>日期</th>
-                                <th>类型</th>
-                                <th>分类</th>
+                                <th>收支分类</th>
+                                <th>明细分类</th>
                                 <th>摘要</th>
                                 <th>金额</th>
                                 <th>备注</th>
@@ -178,9 +95,12 @@
                         </tbody>
                     </table>
                 </div>
+                <!-- 分页控件 -->
                 <div id="pagination-container"></div>
             </section>
         </main>
+
+        </footer>
     </div>
 
     <!-- 编辑弹窗 -->
@@ -206,8 +126,8 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>明细分类</label>
-                        <input type="text" name="category" list="category-list-edit" placeholder="输入或选择">
+                        <label>明细分类 <span class="required">*</span></label>
+                        <input type="text" name="category" list="category-list-edit" required placeholder="输入或选择类别">
                         <datalist id="category-list-edit">
                             <option value="投资款">
                             <option value="货款">
@@ -240,159 +160,29 @@
                     </div>
                 </div>
                 <div class="form-actions">
-                    <button type="submit" class="btn-primary">保存</button>
+                    <button type="submit" class="btn-primary">保存修改</button>
                     <button type="button" class="btn-secondary" onclick="closeEditModal()">取消</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- 提示消息 -->
     <div id="toast" class="toast"></div>
 
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     <script src="{{ url_for('static', filename='js/pagination.js') }}"></script>
     <script>
-        let trendChart = null;
-        let pieChart = null;
-
-        // 初始化图表
-        function initCharts() {
-            trendChart = echarts.init(document.getElementById('trend-chart'));
-            pieChart = echarts.init(document.getElementById('pie-chart'));
-            
-            window.addEventListener('resize', function() {
-                trendChart && trendChart.resize();
-                pieChart && pieChart.resize();
-            });
-        }
-
-        // 加载图表数据
-        async function loadChartData() {
-            try {
-                const year = new Date().getFullYear();
-                const response = await fetch(`/api/reports?type=yearly&year=${year}`);
-                const data = await response.json();
-                
-                if (data.monthly_data) {
-                    const months = [];
-                    const incomeData = [];
-                    const expenseData = [];
-                    
-                    for (let i = 1; i <= 12; i++) {
-                        months.push(i + '月');
-                        const m = data.monthly_data[i];
-                        if (m) {
-                            incomeData.push(m.total_income);
-                            expenseData.push(m.total_expense);
-                        } else {
-                            incomeData.push(0);
-                            expenseData.push(0);
-                        }
-                    }
-                    
-                    // 趋势图
-                    if (trendChart) {
-                        trendChart.setOption({
-                            tooltip: { trigger: 'axis' },
-                            legend: { data: ['收入', '支出'] },
-                            xAxis: { type: 'category', data: months },
-                            yAxis: { type: 'value' },
-                            series: [
-                                { name: '收入', type: 'bar', data: incomeData, itemStyle: { color: '#38ef7d' } },
-                                { name: '支出', type: 'bar', data: expenseData, itemStyle: { color: '#f45c43' } }
-                            ]
-                        });
-                    }
-                    
-                    // 饼图
-                    if (pieChart) {
-                        const totalIncome = data.total_income || 0;
-                        const totalExpense = data.total_expense || 0;
-                        pieChart.setOption({
-                            tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
-                            series: [{
-                                type: 'pie',
-                                radius: ['40%', '70%'],
-                                data: [
-                                    { value: totalIncome, name: '收入' },
-                                    { value: totalExpense, name: '支出' }
-                                ],
-                                itemStyle: { 
-                                    borderRadius: 10,
-                                    borderColor: '#fff',
-                                    borderWidth: 2
-                                }
-                            }]
-                        });
-                    }
-                }
-            } catch (error) {
-                console.error('加载图表失败:', error);
-            }
-        }
-
-        // 快捷筛选
-        function setQuickFilter(type) {
-            const today = new Date();
-            let startDate, endDate;
-            
-            document.querySelectorAll('.quick-filter').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            switch(type) {
-                case 'today':
-                    startDate = endDate = today.toISOString().split('T')[0];
-                    break;
-                case 'week':
-                    const weekStart = new Date(today);
-                    weekStart.setDate(today.getDate() - today.getDay());
-                    startDate = weekStart.toISOString().split('T')[0];
-                    endDate = today.toISOString().split('T')[0];
-                    break;
-                case 'month':
-                    startDate = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-01`;
-                    endDate = today.toISOString().split('T')[0];
-                    break;
-                case 'year':
-                    startDate = `${today.getFullYear()}-01-01`;
-                    endDate = today.toISOString().split('T')[0];
-                    break;
-            }
-            
-            document.getElementById('start-date').value = startDate;
-            document.getElementById('end-date').value = endDate;
-            applyFilter();
-        }
-
         document.addEventListener('DOMContentLoaded', function() {
+            // 加载保存的筛选条件
             loadSavedFilter();
+            // 应用筛选条件
             applyFilter();
-            initCharts();
-            loadChartData();
         });
         
-        async function loadSummaryData(url = '/api/statistics') {
+        async function loadRecentTransactions() {
             try {
-                const response = await fetch(url);
-                const data = await response.json();
-                
-                if (document.getElementById('total-income')) {
-                    document.getElementById('total-income').textContent = '¥' + formatAmount(data.total_income);
-                }
-                if (document.getElementById('total-expense')) {
-                    document.getElementById('total-expense').textContent = '¥' + formatAmount(data.total_expense);
-                }
-                if (document.getElementById('balance')) {
-                    document.getElementById('balance').textContent = '¥' + formatAmount(data.balance);
-                }
-            } catch (error) {
-                console.error('加载统计数据失败:', error);
-            }
-        }
-        
-        async function loadFilteredTransactions(url) {
-            try {
-                const response = await fetch(url);
+                const response = await fetch('/api/transactions?per_page=50');
                 const data = await response.json();
                 
                 const tableBody = document.getElementById('transactions-table');
@@ -401,16 +191,19 @@
                     
                     data.transactions.forEach(transaction => {
                         const row = document.createElement('tr');
-                        
                         const editBtn = document.createElement('button');
-                        editBtn.className = 'btn btn-primary btn-sm';
+                        editBtn.className = 'btn-primary btn-sm';
                         editBtn.textContent = '编辑';
-                        editBtn.onclick = function() { loadTransactionForEdit(transaction.id); };
+                        editBtn.onclick = function() {
+                            loadTransactionForEdit(transaction.id);
+                        };
                         
                         const deleteBtn = document.createElement('button');
-                        deleteBtn.className = 'btn btn-danger btn-sm';
+                        deleteBtn.className = 'btn-danger btn-sm';
                         deleteBtn.textContent = '删除';
-                        deleteBtn.onclick = function() { confirmDelete(transaction.id); };
+                        deleteBtn.onclick = function() {
+                            confirmDelete(transaction.id);
+                        };
                         
                         const actionCell = document.createElement('td');
                         const actionsContainer = document.createElement('div');
@@ -432,26 +225,49 @@
                     });
                 }
                 
+                // 初始化分页控件
                 initPagination(data.current_page, data.pages);
             } catch (error) {
-                console.error('加载交易失败:', error);
+                console.error('加载交易记录失败:', error);
             }
         }
         
         async function confirmDelete(id) {
-            if (confirm('确定删除这条记录吗？')) {
+            if (confirm('确定要删除这条记录吗？')) {
                 try {
-                    const response = await fetch('/api/transactions/' + id, { method: 'DELETE' });
+                    const response = await fetch('/api/transactions/' + id, {
+                        method: 'DELETE'
+                    });
                     if (response.ok) {
-                        showToast('删除成功');
+                        alert('删除成功');
                         loadSummaryData();
-                        applyFilter();
+                        loadRecentTransactions();
                     } else {
-                        showToast('删除失败', 'error');
+                        alert('删除失败');
                     }
                 } catch (error) {
-                    showToast('删除失败', 'error');
+                    console.error('删除失败:', error);
+                    alert('删除失败');
                 }
+            }
+        }
+        
+        async function loadSummaryData(url = '/api/statistics') {
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (document.getElementById('total-income')) {
+                    document.getElementById('total-income').textContent = formatAmount(data.total_income);
+                }
+                if (document.getElementById('total-expense')) {
+                    document.getElementById('total-expense').textContent = formatAmount(data.total_expense);
+                }
+                if (document.getElementById('balance')) {
+                    document.getElementById('balance').textContent = formatAmount(data.balance);
+                }
+            } catch (error) {
+                console.error('加载统计数据失败:', error);
             }
         }
         
@@ -462,19 +278,87 @@
             const month = document.getElementById('month-filter').value;
             const type = document.getElementById('type-filter').value;
             
+            // 保存筛选条件
             saveFilter();
             
             let url = '/api/transactions?per_page=50&page=1';
             let statsUrl = '/api/statistics';
             
-            if (startDate) { url += '&start_date=' + startDate; statsUrl += '?start_date=' + startDate; }
-            if (endDate) { url += '&end_date=' + endDate; statsUrl += (statsUrl.includes('?') ? '&' : '?') + 'end_date=' + endDate; }
-            if (year) { url += '&year=' + year; statsUrl += (statsUrl.includes('?') ? '&' : '?') + 'year=' + year; }
-            if (month) { url += '&month=' + month; statsUrl += (statsUrl.includes('?') ? '&' : '?') + 'month=' + month; }
-            if (type) { url += '&type=' + type; statsUrl += (statsUrl.includes('?') ? '&' : '?') + 'type=' + type; }
+            if (startDate) {
+                url += '&start_date=' + startDate;
+                statsUrl += '?start_date=' + startDate;
+            }
+            if (endDate) {
+                url += '&end_date=' + endDate;
+                statsUrl += (statsUrl.includes('?') ? '&' : '?') + 'end_date=' + endDate;
+            }
+            if (year) {
+                url += '&year=' + year;
+                statsUrl += (statsUrl.includes('?') ? '&' : '?') + 'year=' + year;
+            }
+            if (month) {
+                url += '&month=' + month;
+                statsUrl += (statsUrl.includes('?') ? '&' : '?') + 'month=' + month;
+            }
+            if (type) {
+                url += '&type=' + type;
+                statsUrl += (statsUrl.includes('?') ? '&' : '?') + 'type=' + type;
+            }
             
             loadFilteredTransactions(url);
             loadSummaryData(statsUrl);
+        }
+        
+        async function loadFilteredTransactions(url) {
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                const tableBody = document.getElementById('transactions-table');
+                if (tableBody) {
+                    tableBody.innerHTML = '';
+                    
+                    data.transactions.forEach(transaction => {
+                        const row = document.createElement('tr');
+                        const editBtn = document.createElement('button');
+                        editBtn.className = 'btn-primary btn-sm';
+                        editBtn.textContent = '编辑';
+                        editBtn.onclick = function() {
+                            loadTransactionForEdit(transaction.id);
+                        };
+                        
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'btn-danger btn-sm';
+                        deleteBtn.textContent = '删除';
+                        deleteBtn.onclick = function() {
+                            confirmDelete(transaction.id);
+                        };
+                        
+                        const actionCell = document.createElement('td');
+                        const actionsContainer = document.createElement('div');
+                        actionsContainer.className = 'table-actions';
+                        actionsContainer.appendChild(editBtn);
+                        actionsContainer.appendChild(deleteBtn);
+                        actionCell.appendChild(actionsContainer);
+                        
+                        row.innerHTML = `
+                            <td>${formatDate(transaction.date)}</td>
+                            <td><span class="type-badge ${transaction.type}">${transaction.type}</span></td>
+                            <td>${transaction.category || '-'}</td>
+                            <td>${transaction.description || '-'}</td>
+                            <td class="amount ${transaction.type}">${formatAmount(transaction.amount)}</td>
+                            <td>${transaction.remark || '-'}</td>
+                        `;
+                        row.appendChild(actionCell);
+                        tableBody.appendChild(row);
+                    });
+                }
+                
+                // 初始化分页控件
+                initPagination(data.current_page, data.pages);
+            } catch (error) {
+                console.error('加载筛选交易记录失败:', error);
+            }
         }
         
         function resetFilter() {
@@ -483,12 +367,13 @@
             document.getElementById('year-filter').value = '';
             document.getElementById('month-filter').value = '';
             document.getElementById('type-filter').value = '';
-            document.querySelectorAll('.quick-filter').forEach(btn => btn.classList.remove('active'));
+            // 清除保存的筛选条件
             localStorage.removeItem('filter');
             loadSummaryData();
-            loadFilteredTransactions('/api/transactions?per_page=50&page=1');
+            loadRecentTransactions();
         }
         
+        // 保存筛选条件到localStorage
         function saveFilter() {
             const filter = {
                 startDate: document.getElementById('start-date').value,
@@ -500,6 +385,7 @@
             localStorage.setItem('filter', JSON.stringify(filter));
         }
         
+        // 从localStorage加载筛选条件
         function loadSavedFilter() {
             const savedFilter = localStorage.getItem('filter');
             if (savedFilter) {
@@ -512,8 +398,10 @@
             }
         }
         
+        // 分页控件实例
         let pagination = null;
         
+        // 初始化分页控件
         function initPagination(currentPage, totalPages) {
             if (pagination) {
                 pagination.update(currentPage, totalPages);
@@ -522,12 +410,16 @@
                     currentPage: currentPage,
                     totalPages: totalPages,
                     pageSize: 50,
-                    onPageChange: function(page) { loadPageData(page); }
+                    onPageChange: function(page) {
+                        loadPageData(page);
+                    }
                 });
             }
         }
         
+        // 加载指定页的数据
         function loadPageData(page) {
+            // 获取当前筛选条件
             const startDate = document.getElementById('start-date').value;
             const endDate = document.getElementById('end-date').value;
             const year = document.getElementById('year-filter').value;
@@ -535,6 +427,7 @@
             const type = document.getElementById('type-filter').value;
             
             let url = `/api/transactions?per_page=50&page=${page}`;
+            
             if (startDate) url += '&start_date=' + startDate;
             if (endDate) url += '&end_date=' + endDate;
             if (year) url += '&year=' + year;
@@ -544,6 +437,7 @@
             loadFilteredTransactions(url);
         }
         
+        // 加载交易信息用于编辑
         async function loadTransactionForEdit(id) {
             try {
                 const response = await fetch('/api/transactions/' + id);
@@ -552,10 +446,12 @@
                     openEditModal(transaction);
                 }
             } catch (error) {
-                showToast('加载失败', 'error');
+                console.error('加载交易失败:', error);
+                showToast('加载交易失败', 'error');
             }
         }
         
+        // 打开编辑弹窗
         function openEditModal(transaction) {
             document.querySelector('#edit-form input[name="id"]').value = transaction.id;
             document.querySelector('#edit-form input[name="date"]').value = transaction.date;
@@ -564,15 +460,19 @@
             document.querySelector('#edit-form input[name="amount"]').value = transaction.amount;
             document.querySelector('#edit-form textarea[name="description"]').value = transaction.description || '';
             document.querySelector('#edit-form textarea[name="remark"]').value = transaction.remark || '';
+            
             document.getElementById('edit-modal').style.display = 'block';
         }
         
+        // 关闭编辑弹窗
         function closeEditModal() {
             document.getElementById('edit-modal').style.display = 'none';
         }
         
+        // 处理编辑表单提交
         async function handleEditSubmit(e) {
             e.preventDefault();
+            
             const formData = new FormData(e.target);
             const data = Object.fromEntries(formData);
             const id = data.id;
@@ -581,38 +481,52 @@
             try {
                 const response = await fetch(`/api/transactions/${id}`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify(data)
                 });
                 
                 if (response.ok) {
-                    showToast('修改成功');
+                    showToast('修改成功！');
                     closeEditModal();
                     loadSummaryData();
                     applyFilter();
                 } else {
-                    showToast('修改失败', 'error');
+                    showToast('修改失败，请重试', 'error');
                 }
             } catch (error) {
-                showToast('修改失败', 'error');
+                console.error('修改交易失败:', error);
+                showToast('修改失败，请检查网络连接', 'error');
             }
         }
         
+        // 显示提示消息
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             toast.textContent = message;
             toast.className = 'toast ' + type;
             toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
         }
         
+        // 绑定编辑表单提交事件
         document.addEventListener('DOMContentLoaded', function() {
             const editForm = document.getElementById('edit-form');
-            if (editForm) { editForm.addEventListener('submit', handleEditSubmit); }
+            if (editForm) {
+                editForm.addEventListener('submit', handleEditSubmit);
+            }
         });
         
+        // 点击弹窗外部关闭
         window.onclick = function(event) {
-            if (event.target === document.getElementById('edit-modal')) { closeEditModal(); }
+            const modal = document.getElementById('edit-modal');
+            if (event.target === modal) {
+                closeEditModal();
+            }
         }
     </script>
 </body>
