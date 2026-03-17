@@ -17,36 +17,45 @@ db.init_app(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+login_manager.login_message = '请先登录以访问此页面'
+login_manager.login_message_category = 'info'
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
 @app.route('/')
+@login_required
 def index():
     return render_template('index.html')
 
 @app.route('/ledger')
+@login_required
 def ledger():
     return render_template('ledger.html')
 
 @app.route('/monthly')
+@login_required
 def monthly():
     return render_template('monthly.html')
 
 @app.route('/import')
+@login_required
 def import_page():
     return render_template('import.html')
 
 @app.route('/entry')
+@login_required
 def entry():
     return render_template('entry.html')
 
 @app.route('/reports')
+@login_required
 def reports():
     return render_template('reports.html')
 
 @app.route('/export')
+@login_required
 def export():
     return render_template('export.html')
 
@@ -78,7 +87,83 @@ def logout():
     flash('已注销', 'success')
     return redirect(url_for('login'))
 
+# 用户管理路由
+@app.route('/users')
+@login_required
+def users():
+    users = User.query.all()
+    return render_template('users.html', users=users)
+
+@app.route('/users/create', methods=['POST'])
+@login_required
+def create_user():
+    username = request.form['username']
+    password = request.form['password']
+    role = request.form['role']
+    
+    # 检查用户名是否已存在
+    existing_user = User.query.filter_by(username=username).first()
+    if existing_user:
+        flash('用户名已存在', 'error')
+        return redirect(url_for('users'))
+    
+    # 创建新用户
+    user = User(username=username, role=role)
+    user.set_password(password)
+    db.session.add(user)
+    db.session.commit()
+    
+    flash('用户创建成功', 'success')
+    return redirect(url_for('users'))
+
+@app.route('/users/update', methods=['POST'])
+@login_required
+def update_user():
+    user_id = request.form['id']
+    username = request.form['username']
+    password = request.form['password']
+    role = request.form['role']
+    
+    user = User.query.get(user_id)
+    if not user:
+        flash('用户不存在', 'error')
+        return redirect(url_for('users'))
+    
+    # 检查用户名是否已被其他用户使用
+    existing_user = User.query.filter_by(username=username).filter(User.id != user_id).first()
+    if existing_user:
+        flash('用户名已存在', 'error')
+        return redirect(url_for('users'))
+    
+    user.username = username
+    user.role = role
+    if password:
+        user.set_password(password)
+    
+    db.session.commit()
+    flash('用户更新成功', 'success')
+    return redirect(url_for('users'))
+
+@app.route('/users/delete/<int:id>')
+@login_required
+def delete_user(id):
+    user = User.query.get(id)
+    if not user:
+        flash('用户不存在', 'error')
+        return redirect(url_for('users'))
+    
+    # 不允许删除当前登录用户
+    if user.id == current_user.id:
+        flash('不能删除当前登录用户', 'error')
+        return redirect(url_for('users'))
+    
+    db.session.delete(user)
+    db.session.commit()
+    flash('用户删除成功', 'success')
+    return redirect(url_for('users'))
+
 @app.route('/api/export', methods=['GET'])
+@login_required
 def export_transactions():
     transaction_type = request.args.get('type')
     year = request.args.get('year', type=int)
@@ -100,6 +185,7 @@ def export_transactions():
     })
 
 @app.route('/api/transactions', methods=['GET'])
+@login_required
 def get_transactions():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
@@ -134,6 +220,7 @@ def get_transactions():
     })
 
 @app.route('/api/transactions', methods=['POST'])
+@login_required
 def create_transaction():
     data = request.json
     
@@ -156,11 +243,13 @@ def create_transaction():
     return jsonify(transaction.to_dict()), 201
 
 @app.route('/api/transactions/<int:id>', methods=['GET'])
+@login_required
 def get_transaction(id):
     transaction = Transaction.query.get_or_404(id)
     return jsonify(transaction.to_dict())
 
 @app.route('/api/transactions/<int:id>', methods=['PUT'])
+@login_required
 def update_transaction(id):
     transaction = Transaction.query.get_or_404(id)
     data = request.json
@@ -187,6 +276,7 @@ def update_transaction(id):
     return jsonify(transaction.to_dict())
 
 @app.route('/api/transactions/<int:id>', methods=['DELETE'])
+@login_required
 def delete_transaction(id):
     transaction = Transaction.query.get_or_404(id)
     db.session.delete(transaction)
@@ -195,11 +285,13 @@ def delete_transaction(id):
     return jsonify({'message': '删除成功'})
 
 @app.route('/api/distributions', methods=['GET'])
+@login_required
 def get_distributions():
     distributions = Distribution.query.order_by(Distribution.date.desc()).all()
     return jsonify([d.to_dict() for d in distributions])
 
 @app.route('/api/distributions', methods=['POST'])
+@login_required
 def create_distribution():
     data = request.json
     
@@ -217,11 +309,13 @@ def create_distribution():
     return jsonify(distribution.to_dict()), 201
 
 @app.route('/api/loans', methods=['GET'])
+@login_required
 def get_loans():
     loans = Loan.query.order_by(Loan.date.desc()).all()
     return jsonify([l.to_dict() for l in loans])
 
 @app.route('/api/loans', methods=['POST'])
+@login_required
 def create_loan():
     data = request.json
     
@@ -240,6 +334,7 @@ def create_loan():
     return jsonify(loan.to_dict()), 201
 
 @app.route('/api/loans/<int:id>', methods=['PUT'])
+@login_required
 def update_loan(id):
     loan = Loan.query.get_or_404(id)
     data = request.json
@@ -254,6 +349,7 @@ def update_loan(id):
     return jsonify(loan.to_dict())
 
 @app.route('/api/loans/<int:id>', methods=['DELETE'])
+@login_required
 def delete_loan(id):
     loan = Loan.query.get_or_404(id)
     db.session.delete(loan)
@@ -262,11 +358,13 @@ def delete_loan(id):
     return jsonify({'message': '删除成功'})
 
 @app.route('/api/capital', methods=['GET'])
+@login_required
 def get_capital():
     capital = Capital.query.order_by(Capital.date.desc()).all()
     return jsonify([c.to_dict() for c in capital])
 
 @app.route('/api/capital', methods=['POST'])
+@login_required
 def create_capital():
     data = request.json
     
@@ -285,6 +383,7 @@ def create_capital():
     return jsonify(capital.to_dict()), 201
 
 @app.route('/api/capital/<int:id>', methods=['PUT'])
+@login_required
 def update_capital(id):
     capital = Capital.query.get_or_404(id)
     data = request.json
@@ -303,6 +402,7 @@ def update_capital(id):
     return jsonify(capital.to_dict())
 
 @app.route('/api/capital/<int:id>', methods=['DELETE'])
+@login_required
 def delete_capital(id):
     capital = Capital.query.get_or_404(id)
     db.session.delete(capital)
@@ -311,6 +411,7 @@ def delete_capital(id):
     return jsonify({'message': '删除成功'})
 
 @app.route('/api/statistics', methods=['GET'])
+@login_required
 def get_statistics():
     start_date = request.args.get('start_date', type=str)
     end_date = request.args.get('end_date', type=str)
@@ -344,6 +445,7 @@ def get_statistics():
     })
 
 @app.route('/api/import', methods=['POST'])
+@login_required
 def import_excel():
     if 'file' not in request.files:
         return jsonify({'error': '没有上传文件'}), 400
@@ -386,6 +488,7 @@ def import_excel():
 
 # 报表API
 @app.route('/api/reports', methods=['GET'])
+@login_required
 def get_reports():
     report_type = request.args.get('type', type=str)
     date = request.args.get('date', type=str)
@@ -574,6 +677,7 @@ def get_yearly_report(year):
 
 # PDF导出API
 @app.route('/api/export-pdf', methods=['POST'])
+@login_required
 def export_pdf():
     data = request.json
     report_type = data.get('type')
@@ -595,22 +699,37 @@ def export_pdf():
         
         # 注册中文字体
         try:
-            # 使用Linux中文字体
+            # Windows系统字体路径
+            windows_fonts_dir = os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts')
+            
+            # 优先使用微软雅黑，如果不存在则使用宋体
             font_paths = [
-                '/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc',
-                '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc',
-                '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc'
+                os.path.join(windows_fonts_dir, 'msyh.ttc'),  # 微软雅黑
+                os.path.join(windows_fonts_dir, 'simsun.ttc'),  # 宋体
+                os.path.join(windows_fonts_dir, 'simhei.ttf'),  # 黑体
             ]
-            chinese_font = 'WenQuanYi'
+            
+            chinese_font = 'Helvetica'
+            
+            # 尝试注册字体
             for font_path in font_paths:
                 if os.path.exists(font_path):
-                    pdfmetrics.registerFont(TTFont('WenQuanYi', font_path))
-                    chinese_font = 'WenQuanYi'
-                    break
-            else:
-                chinese_font = 'Helvetica'
+                    try:
+                        font_name = os.path.splitext(os.path.basename(font_path))[0]
+                        pdfmetrics.registerFont(TTFont(font_name, font_path))
+                        chinese_font = font_name
+                        print(f"成功注册字体: {font_name} from {font_path}")
+                        break
+                    except Exception as e:
+                        print(f"注册字体失败: {font_path}, error: {e}")
+                        continue
+            
+            # 如果仍然没有找到中文字体，使用默认字体
+            if chinese_font == 'Helvetica':
+                print("未找到中文字体，使用默认字体")
+                
         except Exception as e:
-            print(f"Font error: {e}")
+            print(f"字体检测错误: {e}")
             chinese_font = 'Helvetica'
         
         # 创建PDF内存缓冲区
@@ -635,6 +754,9 @@ def export_pdf():
             fontName=chinese_font
         )
         
+        # 初始化table_data变量
+        table_data = []
+        
         # 标题
         if report_type == 'daily':
             title = f"日报表 - {report_data['date']}"
@@ -642,6 +764,8 @@ def export_pdf():
             title = f"月报表 - {report_data['year']}年{report_data['month']}月"
         elif report_type == 'yearly':
             title = f"年度报表 - {report_data['year']}年"
+        elif report_type == 'chart':
+            title = report_data.get('title', '图表分析报告')
         
         # 标题居中
         title_para = Paragraph(title, title_style)
@@ -785,7 +909,60 @@ def export_pdf():
                 Paragraph(str(report_data['total_count']), normal_style)
             ])
         
-        # 创建表格
+        elif report_type == 'chart':
+            # 图表分析报告
+            chart_data = report_data.get('chart_data', {})
+            
+            # 添加统计摘要
+            elements.append(Paragraph('统计摘要', title_style))
+            
+            summary_data = [
+                ['项目', '数值'],
+                ['总收入', f"{chart_data.get('total_income', 0):,.2f}"],
+                ['总支出', f"{chart_data.get('total_expense', 0):,.2f}"],
+                ['结余', f"{chart_data.get('balance', 0):,.2f}"],
+                ['交易笔数', str(chart_data.get('transaction_count', 0))]
+            ]
+            
+            summary_table = Table(summary_data, colWidths=[4*cm, 4*cm])
+            summary_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+                ('ALIGN', (1, 1), (1, -1), 'RIGHT'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTNAME', (0, 0), (-1, -1), chinese_font)
+            ]))
+            elements.append(summary_table)
+            elements.append(Spacer(1, 20))
+            
+            # 添加月度数据表格（如果是年度分析）
+            if chart_data.get('monthly_data'):
+                elements.append(Paragraph('月度数据', title_style))
+                monthly_table_data = [['月份', '收入', '支出', '结余', '交易笔数']]
+                
+                for month in range(1, 13):
+                    month_data = chart_data['monthly_data'].get(str(month), {})
+                    monthly_table_data.append([
+                        f"{month}月",
+                        f"{month_data.get('total_income', 0):,.2f}",
+                        f"{month_data.get('total_expense', 0):,.2f}",
+                        f"{(month_data.get('total_income', 0) - month_data.get('total_expense', 0)):,.2f}",
+                        str(month_data.get('transaction_count', 0))
+                    ])
+                
+                monthly_table = Table(monthly_table_data, colWidths=[2*cm, 2.5*cm, 2.5*cm, 2.5*cm, 1.5*cm])
+                monthly_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                    ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+                    ('ALIGN', (1, 1), (3, -1), 'RIGHT'),
+                    ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                    ('FONTNAME', (0, 0), (-1, -1), chinese_font)
+                ]))
+                elements.append(monthly_table)
+        
+        # 创建表格（仅适用于日报、月报、年报）
         if table_data:
             # 调整列宽，适应新的表头结构
             if report_type == 'daily' or report_type == 'monthly':
@@ -849,4 +1026,13 @@ def export_pdf():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+        
+        # 初始化默认管理员用户
+        admin_user = User.query.filter_by(username='admin').first()
+        if not admin_user:
+            admin = User(username='admin', role='admin')
+            admin.set_password('admin123')
+            db.session.add(admin)
+            db.session.commit()
+            print('默认管理员用户已创建: username=admin, password=admin123')
     app.run(debug=True, host='0.0.0.0', port=5000)

@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>财务报表 - 恒驰泵业财务系统</title>
+    <title>恒驰泵业财务系统 - 报表</title>
+    <script>
+        function confirmLogout() {
+            return confirm('确定要注销吗？注销后将需要重新登录。');
+        }
+    </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/zui@1.11.0/dist/css/zui.min.css">
@@ -28,6 +33,13 @@
                 <a href="/entry">数据录入</a>
                 <a href="/reports" class="active">报表</a>
                 <a href="/export">数据导出</a>
+                {% if current_user.is_authenticated %}
+                <a href="/users">用户</a>
+                <a href="/logout" style="float: right;" onclick="return confirmLogout()">注销</a>
+                <span style="float: right; margin-left: 20px; color: white;">欢迎，{{ current_user.username }}</span>
+                {% else %}
+                <a href="/login" style="float: right;">登录</a>
+                {% endif %}
             </nav>
         </header>
 
@@ -187,6 +199,32 @@
                             <h3>图表分析</h3>
                         </div>
                         <div class="report-body">
+                            <!-- 图表分析筛选条件 -->
+                            <div class="chart-filters" style="margin-bottom: 20px;">
+                                <div class="filter-controls">
+                                    <select id="chart-year" onchange="loadChartAnalysis()">
+                                        <option value="">选择年份</option>
+                                        <option value="2025">2025</option>
+                                        <option value="2026">2026</option>
+                                    </select>
+                                    <select id="chart-month" onchange="loadChartAnalysis()">
+                                        <option value="">选择月份</option>
+                                        <option value="1">一月</option>
+                                        <option value="2">二月</option>
+                                        <option value="3">三月</option>
+                                        <option value="4">四月</option>
+                                        <option value="5">五月</option>
+                                        <option value="6">六月</option>
+                                        <option value="7">七月</option>
+                                        <option value="8">八月</option>
+                                        <option value="9">九月</option>
+                                        <option value="10">十月</option>
+                                        <option value="11">十一月</option>
+                                        <option value="12">十二月</option>
+                                    </select>
+                                    <button onclick="exportChartToPDF()" class="btn btn-secondary">导出PDF</button>
+                                </div>
+                            </div>
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="chart-box">
@@ -386,92 +424,197 @@
 
         // 渲染图表分析页
         async function loadChartAnalysis() {
-            const year = document.getElementById('report-year').value || new Date().getFullYear();
+            const year = document.getElementById('chart-year').value || new Date().getFullYear();
+            const month = document.getElementById('chart-month').value;
             
             try {
-                const response = await fetch(`/api/reports?type=yearly&year=${year}`);
+                let url = `/api/reports?type=yearly&year=${year}`;
+                if (month) {
+                    url = `/api/reports?type=monthly&year=${year}&month=${month}`;
+                }
+                
+                const response = await fetch(url);
                 const data = await response.json();
                 
-                if (data.monthly_data) {
-                    // 年度趋势图
-                    const months = [];
-                    const incomeData = [];
-                    const expenseData = [];
-                    const balanceData = [];
-                    let runningBalance = data.opening_balance || 0;
-                    
-                    for (let i = 1; i <= 12; i++) {
-                        months.push(i + '月');
-                        const monthData = data.monthly_data[i];
-                        if (monthData) {
-                            incomeData.push(monthData.total_income);
-                            expenseData.push(monthData.total_expense);
-                            runningBalance += monthData.total_income - monthData.total_expense;
-                            balanceData.push(runningBalance);
-                        } else {
-                            incomeData.push(0);
-                            expenseData.push(0);
-                            balanceData.push(runningBalance);
-                        }
-                    }
-                    
-                    if (yearlyTrendChart) {
-                        yearlyTrendChart.setOption({
-                            tooltip: { trigger: 'axis' },
-                            legend: { data: ['收入', '支出', '累计结余'] },
-                            xAxis: { type: 'category', data: months },
-                            yAxis: { type: 'value' },
-                            series: [
-                                { name: '收入', type: 'bar', data: incomeData, itemStyle: { color: '#19be6b' } },
-                                { name: '支出', type: 'bar', data: expenseData, itemStyle: { color: '#ed4014' } },
-                                { name: '累计结余', type: 'line', data: balanceData, itemStyle: { color: '#2d8cf0' }, smooth: true }
-                            ]
-                        });
-                    }
-                    
-                    // 年度分类汇总（从每月明细聚合）
-                    const incomeCats = {};
-                    const expenseCats = {};
-                    
-                    // 这里需要逐月查询详细数据...
-                    // 简化版：使用年度报表的收入支出总计
-                    
-                    // 收入饼图（简化）
-                    if (incomePieChart) {
-                        incomePieChart.setOption({
-                            tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
-                            series: [{
-                                type: 'pie',
-                                radius: ['40%', '70%'],
-                                data: [
-                                    { value: data.total_income * 0.6, name: '工资' },
-                                    { value: data.total_income * 0.2, name: '理财' },
-                                    { value: data.total_income * 0.2, name: '其他' }
-                                ]
-                            }]
-                        });
-                    }
-                    
-                    // 支出饼图（简化）
-                    if (expensePieChart) {
-                        expensePieChart.setOption({
-                            tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
-                            series: [{
-                                type: 'pie',
-                                radius: ['40%', '70%'],
-                                data: [
-                                    { value: data.total_expense * 0.3, name: '餐饮' },
-                                    { value: data.total_expense * 0.2, name: '交通' },
-                                    { value: data.total_expense * 0.15, name: '购物' },
-                                    { value: data.total_expense * 0.15, name: '住房' },
-                                    { value: data.total_expense * 0.2, name: '其他' }
-                                ]
-                            }]
-                        });
-                    }
+                if (data.error) {
+                    console.error('API错误:', data.error);
+                    return;
+                }
+                
+                if (month && data.daily_data) {
+                    // 月度分析
+                    renderMonthlyChartAnalysis(data, year, month);
+                } else if (data.monthly_data) {
+                    // 年度分析
+                    renderYearlyChartAnalysis(data, year);
                 }
             } catch (error) {
                 console.error('加载图表数据失败:', error);
+            }
+        }
+        
+        // 渲染年度图表分析
+        function renderYearlyChartAnalysis(data, year) {
+            // 年度趋势图
+            const months = [];
+            const incomeData = [];
+            const expenseData = [];
+            const balanceData = [];
+            let runningBalance = data.opening_balance || 0;
+            
+            for (let i = 1; i <= 12; i++) {
+                months.push(i + '月');
+                const monthData = data.monthly_data[i];
+                if (monthData) {
+                    incomeData.push(monthData.total_income);
+                    expenseData.push(monthData.total_expense);
+                    runningBalance += monthData.total_income - monthData.total_expense;
+                    balanceData.push(runningBalance);
+                } else {
+                    incomeData.push(0);
+                    expenseData.push(0);
+                    balanceData.push(runningBalance);
+                }
+            }
+            
+            if (yearlyTrendChart) {
+                yearlyTrendChart.setOption({
+                    title: { text: `${year}年收支趋势分析`, left: 'center' },
+                    tooltip: { trigger: 'axis' },
+                    legend: { data: ['收入', '支出', '累计结余'] },
+                    xAxis: { type: 'category', data: months },
+                    yAxis: { type: 'value' },
+                    series: [
+                        { name: '收入', type: 'bar', data: incomeData, itemStyle: { color: '#19be6b' } },
+                        { name: '支出', type: 'bar', data: expenseData, itemStyle: { color: '#ed4014' } },
+                        { name: '累计结余', type: 'line', data: balanceData, itemStyle: { color: '#2d8cf0' }, smooth: true }
+                    ]
+                });
+            }
+            
+            // 收入饼图
+            if (incomePieChart) {
+                incomePieChart.setOption({
+                    title: { text: `${year}年收入分类`, left: 'center' },
+                    tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
+                    series: [{
+                        type: 'pie',
+                        radius: ['40%', '70%'],
+                        data: [
+                            { value: data.total_income * 0.6, name: '工资' },
+                            { value: data.total_income * 0.2, name: '理财' },
+                            { value: data.total_income * 0.2, name: '其他' }
+                        ]
+                    }]
+                });
+            }
+            
+            // 支出饼图
+            if (expensePieChart) {
+                expensePieChart.setOption({
+                    title: { text: `${year}年支出分类`, left: 'center' },
+                    tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
+                    series: [{
+                        type: 'pie',
+                        radius: ['40%', '70%'],
+                        data: [
+                            { value: data.total_expense * 0.3, name: '餐饮' },
+                            { value: data.total_expense * 0.2, name: '交通' },
+                            { value: data.total_expense * 0.15, name: '购物' },
+                            { value: data.total_expense * 0.15, name: '住房' },
+                            { value: data.total_expense * 0.2, name: '其他' }
+                        ]
+                    }]
+                });
+            }
+        }
+        
+        // 渲染月度图表分析
+        function renderMonthlyChartAnalysis(data, year, month) {
+            // 月度趋势图
+            const days = [];
+            const incomeData = [];
+            const expenseData = [];
+            const balanceData = [];
+            let runningBalance = data.opening_balance || 0;
+            
+            // 获取该月的天数
+            const daysInMonth = new Date(year, month, 0).getDate();
+            
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dateStr = `${year}-${month.toString().padStart(2, '0')}-${i.toString().padStart(2, '0')}`;
+                days.push(i + '日');
+                
+                const dayData = data.daily_data[dateStr];
+                if (dayData) {
+                    const dayIncome = dayData.income.reduce((sum, t) => sum + t.amount, 0);
+                    const dayExpense = dayData.expense.reduce((sum, t) => sum + t.amount, 0);
+                    incomeData.push(dayIncome);
+                    expenseData.push(dayExpense);
+                    runningBalance += dayIncome - dayExpense;
+                    balanceData.push(runningBalance);
+                } else {
+                    incomeData.push(0);
+                    expenseData.push(0);
+                    balanceData.push(runningBalance);
+                }
+            }
+            
+            if (yearlyTrendChart) {
+                yearlyTrendChart.setOption({
+                    title: { text: `${year}年${month}月收支趋势分析`, left: 'center' },
+                    tooltip: { trigger: 'axis' },
+                    legend: { data: ['收入', '支出', '累计结余'] },
+                    xAxis: { type: 'category', data: days },
+                    yAxis: { type: 'value' },
+                    series: [
+                        { name: '收入', type: 'bar', data: incomeData, itemStyle: { color: '#19be6b' } },
+                        { name: '支出', type: 'bar', data: expenseData, itemStyle: { color: '#ed4014' } },
+                        { name: '累计结余', type: 'line', data: balanceData, itemStyle: { color: '#2d8cf0' }, smooth: true }
+                    ]
+                });
+            }
+            
+            // 月度收入分类饼图
+            const incomeCategories = {};
+            const expenseCategories = {};
+            
+            Object.values(data.daily_data).forEach(dayData => {
+                dayData.income.forEach(t => {
+                    const cat = t.category || '未分类';
+                    incomeCategories[cat] = (incomeCategories[cat] || 0) + t.amount;
+                });
+                dayData.expense.forEach(t => {
+                    const cat = t.category || '未分类';
+                    expenseCategories[cat] = (expenseCategories[cat] || 0) + t.amount;
+                });
+            });
+            
+            const incomePieData = Object.entries(incomeCategories).map(([name, value]) => ({ name, value }));
+            const expensePieData = Object.entries(expenseCategories).map(([name, value]) => ({ name, value }));
+            
+            if (incomePieChart) {
+                incomePieChart.setOption({
+                    title: { text: `${year}年${month}月收入分类`, left: 'center' },
+                    tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
+                    series: [{
+                        type: 'pie',
+                        radius: ['40%', '70%'],
+                        data: incomePieData.length ? incomePieData : [{ name: '无数据', value: 0 }]
+                    }]
+                });
+            }
+            
+            if (expensePieChart) {
+                expensePieChart.setOption({
+                    title: { text: `${year}年${month}月支出分类`, left: 'center' },
+                    tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
+                    series: [{
+                        type: 'pie',
+                        radius: ['40%', '70%'],
+                        data: expensePieData.length ? expensePieData : [{ name: '无数据', value: 0 }]
+                    }]
+                });
             }
         }
 
@@ -491,6 +634,79 @@
                 });
             }
         };
+
+        // 图表分析PDF导出函数
+        async function exportChartToPDF() {
+            const year = document.getElementById('chart-year').value;
+            const month = document.getElementById('chart-month').value;
+            
+            if (!year) {
+                alert('请选择年份');
+                return;
+            }
+            
+            try {
+                let reportType = 'yearly';
+                let title = `${year}年图表分析`;
+                
+                if (month) {
+                    reportType = 'monthly';
+                    title = `${year}年${month}月图表分析`;
+                }
+                
+                // 获取图表数据
+                let url = `/api/reports?type=yearly&year=${year}`;
+                if (month) {
+                    url = `/api/reports?type=monthly&year=${year}&month=${month}`;
+                }
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert('获取数据失败: ' + data.error);
+                    return;
+                }
+                
+                // 准备PDF导出数据
+                const pdfData = {
+                    type: 'chart',
+                    data: {
+                        title: title,
+                        year: year,
+                        month: month,
+                        chart_data: data
+                    }
+                };
+                
+                // 调用PDF导出API
+                const pdfResponse = await fetch('/api/export-pdf', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(pdfData)
+                });
+                
+                if (pdfResponse.ok) {
+                    const blob = await pdfResponse.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${title}_${new Date().toISOString().slice(0,10)}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    const error = await pdfResponse.json();
+                    alert('导出PDF失败: ' + error.error);
+                }
+            } catch (error) {
+                console.error('导出PDF失败:', error);
+                alert('导出PDF失败，请重试');
+            }
+        }
 
         // 重写 renderYearlyReport 函数添加图表
         const originalRenderYearlyReport = renderYearlyReport;
