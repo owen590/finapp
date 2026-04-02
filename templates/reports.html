@@ -379,16 +379,13 @@
             // 收入饼图
             if (monthlyIncomeChart) {
                 monthlyIncomeChart.setOption({
-                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: '{b}: ¥{c}' },
-                    legend: { orient: 'horizontal', left: 'center', top: 'top' },
-                    grid: { left: '3%', right: '8%', bottom: '3%', top: '15%', containLabel: true },
-                    xAxis: { type: 'value' },
-                    yAxis: { type: 'category', data: incomePieData.map(d => d.name), axisLabel: { interval: 0 } },
+                    tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
+                    legend: { orient: 'horizontal', left: 'center', bottom: 5 },
                     series: [{
-                        type: 'bar',
-                        data: incomePieData.map(d => d.value),
-                        itemStyle: { color: '#19be6b', borderRadius: [0, 4, 4, 0] },
-                        label: { show: true, position: 'right', formatter: '¥{c}', fontSize: 11 }
+                        type: 'pie',
+                        radius: ['35%', '65%'],
+                        data: incomePieData.length ? incomePieData : [{ name: '无数据', value: 0 }],
+                        itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 }
                     }]
                 });
             }
@@ -396,16 +393,13 @@
             // 支出饼图
             if (monthlyExpenseChart) {
                 monthlyExpenseChart.setOption({
-                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: '{b}: ¥{c}' },
-                    legend: { orient: 'horizontal', left: 'center', top: 'top' },
-                    grid: { left: '3%', right: '8%', bottom: '3%', top: '15%', containLabel: true },
-                    xAxis: { type: 'value' },
-                    yAxis: { type: 'category', data: expensePieData.map(d => d.name), axisLabel: { interval: 0 } },
+                    tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
+                    legend: { orient: 'horizontal', left: 'center', bottom: 5 },
                     series: [{
-                        type: 'bar',
-                        data: expensePieData.map(d => d.value),
-                        itemStyle: { color: '#ed4014', borderRadius: [0, 4, 4, 0] },
-                        label: { show: true, position: 'right', formatter: '¥{c}', fontSize: 11 }
+                        type: 'pie',
+                        radius: ['35%', '65%'],
+                        data: expensePieData.length ? expensePieData : [{ name: '无数据', value: 0 }],
+                        itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 }
                     }]
                 });
             }
@@ -486,19 +480,17 @@
             if (incomePieChart) {
                 incomePieChart.setOption({
                     title: { text: `${year}年收入分类`, left: 'center' },
-                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: '{b}: ¥{c}' },
-                    grid: { left: '3%', right: '12%', bottom: '3%', top: '15%', containLabel: true },
-                    xAxis: { type: 'value' },
-                    yAxis: { type: 'category', data: ['工资', '理财', '其他'], axisLabel: { interval: 0 } },
+                    tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
+                    legend: { orient: 'horizontal', left: 'center', bottom: 5 },
                     series: [{
-                        type: 'bar',
+                        type: 'pie',
+                        radius: ['35%', '65%'],
                         data: [
-                            data.total_income * 0.6,
-                            data.total_income * 0.2,
-                            data.total_income * 0.2
+                            { value: data.total_income * 0.6, name: '工资' },
+                            { value: data.total_income * 0.2, name: '理财' },
+                            { value: data.total_income * 0.2, name: '其他' }
                         ],
-                        itemStyle: { color: '#19be6b', borderRadius: [0, 4, 4, 0] },
-                        label: { show: true, position: 'right', formatter: '¥{c}', fontSize: 11 }
+                        itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 }
                     }]
                 });
             }
@@ -507,21 +499,19 @@
             if (expensePieChart) {
                 expensePieChart.setOption({
                     title: { text: `${year}年支出分类`, left: 'center' },
-                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: '{b}: ¥{c}' },
-                    grid: { left: '3%', right: '12%', bottom: '3%', top: '15%', containLabel: true },
-                    xAxis: { type: 'value' },
-                    yAxis: { type: 'category', data: ['餐饮', '交通', '购物', '住房', '其他'], axisLabel: { interval: 0 } },
+                    tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
+                    legend: { orient: 'horizontal', left: 'center', bottom: 5 },
                     series: [{
-                        type: 'bar',
+                        type: 'pie',
+                        radius: ['35%', '65%'],
                         data: [
-                            data.total_expense * 0.3,
-                            data.total_expense * 0.2,
-                            data.total_expense * 0.15,
-                            data.total_expense * 0.15,
-                            data.total_expense * 0.2
+                            { value: data.total_expense * 0.3, name: '餐饮' },
+                            { value: data.total_expense * 0.2, name: '交通' },
+                            { value: data.total_expense * 0.15, name: '购物' },
+                            { value: data.total_expense * 0.15, name: '住房' },
+                            { value: data.total_expense * 0.2, name: '其他' }
                         ],
-                        itemStyle: { color: '#ed4014', borderRadius: [0, 4, 4, 0] },
-                        label: { show: true, position: 'right', formatter: '¥{c}', fontSize: 11 }
+                        itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 }
                     }]
                 });
             }
@@ -593,35 +583,29 @@
             const expensePieData = Object.entries(expenseCategories).map(([name, value]) => ({ name, value }));
             
             if (incomePieChart) {
-                const sortedIncomeData = [...incomePieData].sort((a, b) => b.value - a.value);
                 incomePieChart.setOption({
                     title: { text: `${year}年${month}月收入分类`, left: 'center' },
-                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: '{b}: ¥{c}' },
-                    grid: { left: '3%', right: '12%', bottom: '3%', top: '15%', containLabel: true },
-                    xAxis: { type: 'value' },
-                    yAxis: { type: 'category', data: (sortedIncomeData.length ? sortedIncomeData : [{ name: '无数据', value: 0 }]).map(d => d.name), axisLabel: { interval: 0 } },
+                    tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
+                    legend: { orient: 'horizontal', left: 'center', bottom: 5 },
                     series: [{
-                        type: 'bar',
-                        data: (sortedIncomeData.length ? sortedIncomeData : [{ name: '无数据', value: 0 }]).map(d => d.value),
-                        itemStyle: { color: '#19be6b', borderRadius: [0, 4, 4, 0] },
-                        label: { show: true, position: 'right', formatter: '¥{c}', fontSize: 11 }
+                        type: 'pie',
+                        radius: ['35%', '65%'],
+                        data: incomePieData.length ? incomePieData : [{ name: '无数据', value: 0 }],
+                        itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 }
                     }]
                 });
             }
             
             if (expensePieChart) {
-                const sortedExpenseData = [...expensePieData].sort((a, b) => b.value - a.value);
                 expensePieChart.setOption({
                     title: { text: `${year}年${month}月支出分类`, left: 'center' },
-                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: '{b}: ¥{c}' },
-                    grid: { left: '3%', right: '12%', bottom: '3%', top: '15%', containLabel: true },
-                    xAxis: { type: 'value' },
-                    yAxis: { type: 'category', data: (sortedExpenseData.length ? sortedExpenseData : [{ name: '无数据', value: 0 }]).map(d => d.name), axisLabel: { interval: 0 } },
+                    tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
+                    legend: { orient: 'horizontal', left: 'center', bottom: 5 },
                     series: [{
-                        type: 'bar',
-                        data: (sortedExpenseData.length ? sortedExpenseData : [{ name: '无数据', value: 0 }]).map(d => d.value),
-                        itemStyle: { color: '#ed4014', borderRadius: [0, 4, 4, 0] },
-                        label: { show: true, position: 'right', formatter: '¥{c}', fontSize: 11 }
+                        type: 'pie',
+                        radius: ['35%', '65%'],
+                        data: expensePieData.length ? expensePieData : [{ name: '无数据', value: 0 }],
+                        itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 }
                     }]
                 });
             }
