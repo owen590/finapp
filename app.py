@@ -101,6 +101,39 @@ def logout():
     flash('已注销', 'success')
     return redirect(url_for('login'))
 
+# 修改密码页面
+@app.route('/finapp/change-password')
+@login_required
+def change_password_page():
+    return render_template('change_password.html')
+
+# 修改密码接口
+@app.route('/finapp/api/change-password', methods=['POST'])
+@login_required
+def change_password():
+    data = request.get_json()
+    old_pwd = data.get('old_password', '')
+    new_pwd = data.get('new_password', '')
+    confirm_pwd = data.get('confirm_password', '')
+    
+    if not all([old_pwd, new_pwd, confirm_pwd]):
+        return jsonify({'success': False, 'message': '所有字段都不能为空'})
+    
+    if new_pwd != confirm_pwd:
+        return jsonify({'success': False, 'message': '两次新密码不一致'})
+    
+    if len(new_pwd) < 6:
+        return jsonify({'success': False, 'message': '新密码至少6位'})
+    
+    # 验证旧密码
+    user = current_user
+    if not user.check_password(old_pwd):
+        return jsonify({'success': False, 'message': '旧密码错误'})
+    
+    user.set_password(new_pwd)
+    db.session.commit()
+    return jsonify({'success': True, 'message': '密码修改成功'})
+
 # 用户管理路由
 @app.route('/finapp/users')
 @login_required
@@ -1035,7 +1068,7 @@ def export_pdf():
                     Paragraph('上期结余转入', normal_style),
                     Paragraph('', normal_style),
                     Paragraph('', normal_style),
-                    Paragraph(f"{running_balance:,.2f}", normal_style)
+                    Paragraph(f"{running_balance:,.2f}", right_style)
                 ])
             for t in report_data.get('transactions', []):
                 time = datetime.fromisoformat(t['created_at']).strftime('%H:%M')
@@ -1049,9 +1082,9 @@ def export_pdf():
                     Paragraph(t['type'], normal_style),
                     Paragraph(t['category'], normal_style),
                     Paragraph(t['description'], normal_style),
-                    Paragraph(income_str, normal_style),
-                    Paragraph(expense_str, normal_style),
-                    Paragraph(f"{running_balance:,.2f}", normal_style)
+                    Paragraph(income_str, right_style),
+                    Paragraph(expense_str, right_style),
+                    Paragraph(f"{running_balance:,.2f}", right_style)
                 ])
             # 添加汇总行
             table_data.append([
@@ -1059,9 +1092,9 @@ def export_pdf():
                 Paragraph('', normal_style),
                 Paragraph('', normal_style),
                 Paragraph('当日汇总', normal_style),
-                Paragraph(f"{report_data['total_income']:,.2f}", normal_style),
-                Paragraph(f"{report_data['total_expense']:,.2f}", normal_style),
-                Paragraph(f"{running_balance:,.2f}", normal_style)
+                Paragraph(f"{report_data['total_income']:,.2f}", right_style),
+                Paragraph(f"{report_data['total_expense']:,.2f}", right_style),
+                Paragraph(f"{running_balance:,.2f}", right_style)
             ])
         
         elif report_type == 'monthly':
@@ -1078,7 +1111,7 @@ def export_pdf():
                     Paragraph('上期结余转入', normal_style),
                     Paragraph('', normal_style),
                     Paragraph('', normal_style),
-                    Paragraph(f"{running_balance:,.2f}", normal_style)
+                    Paragraph(f"{running_balance:,.2f}", right_style)
                 ])
             # 按日期排序
             sorted_dates = sorted(report_data.get('daily_data', {}).keys())
@@ -1097,7 +1130,7 @@ def export_pdf():
                         Paragraph(t['description'], normal_style),
                         Paragraph(f"{t['amount']:,.2f}", normal_style),
                         Paragraph('', normal_style),
-                        Paragraph(f"{running_balance:,.2f}", normal_style)
+                        Paragraph(f"{running_balance:,.2f}", right_style)
                     ])
                 # 再添加支出记录
                 for t in day_data.get('expense', []):
@@ -1109,7 +1142,7 @@ def export_pdf():
                         Paragraph(t['description'], normal_style),
                         Paragraph('', normal_style),
                         Paragraph(f"{t['amount']:,.2f}", normal_style),
-                        Paragraph(f"{running_balance:,.2f}", normal_style)
+                        Paragraph(f"{running_balance:,.2f}", right_style)
                     ])
             # 添加汇总行
             table_data.append([
@@ -1117,9 +1150,9 @@ def export_pdf():
                 Paragraph('', normal_style),
                 Paragraph('', normal_style),
                 Paragraph('月度汇总', normal_style),
-                Paragraph(f"{report_data['total_income']:,.2f}", normal_style),
-                Paragraph(f"{report_data['total_expense']:,.2f}", normal_style),
-                Paragraph(f"{running_balance:,.2f}", normal_style)
+                Paragraph(f"{report_data['total_income']:,.2f}", right_style),
+                Paragraph(f"{report_data['total_expense']:,.2f}", right_style),
+                Paragraph(f"{running_balance:,.2f}", right_style)
             ])
         
         elif report_type == 'yearly':
@@ -1132,7 +1165,7 @@ def export_pdf():
                     Paragraph('年初', normal_style),
                     Paragraph('', normal_style),
                     Paragraph('', normal_style),
-                    Paragraph(f"{running_balance:,.2f}", normal_style),
+                    Paragraph(f"{running_balance:,.2f}", right_style),
                     Paragraph('', normal_style)
                 ])
             # 按月份排序
@@ -1143,18 +1176,18 @@ def export_pdf():
                 running_balance = running_balance + month_balance
                 table_data.append([
                     Paragraph(f"{month_str}月", normal_style),
-                    Paragraph(f"{month_data['total_income']:,.2f}", normal_style),
-                    Paragraph(f"{month_data['total_expense']:,.2f}", normal_style),
-                    Paragraph(f"{running_balance:,.2f}", normal_style),
-                    Paragraph(str(month_data['transaction_count']), normal_style)
+                    Paragraph(f"{month_data['total_income']:,.2f}", right_style),
+                    Paragraph(f"{month_data['total_expense']:,.2f}", right_style),
+                    Paragraph(f"{running_balance:,.2f}", right_style),
+                    Paragraph(str(month_data['transaction_count']), right_style)
                 ])
             # 添加汇总行
             table_data.append([
                 Paragraph('年度汇总', normal_style),
-                Paragraph(f"{report_data['total_income']:,.2f}", normal_style),
-                Paragraph(f"{report_data['total_expense']:,.2f}", normal_style),
-                Paragraph(f"{running_balance:,.2f}", normal_style),
-                Paragraph(str(report_data['total_count']), normal_style)
+                Paragraph(f"{report_data['total_income']:,.2f}", right_style),
+                Paragraph(f"{report_data['total_expense']:,.2f}", right_style),
+                Paragraph(f"{running_balance:,.2f}", right_style),
+                Paragraph(str(report_data['total_count']), right_style)
             ])
         
         elif report_type == 'chart':
@@ -1165,11 +1198,11 @@ def export_pdf():
             elements.append(Paragraph('统计摘要', title_style))
             
             summary_data = [
-                ['项目', '数值'],
-                ['总收入', f"{chart_data.get('total_income', 0):,.2f}"],
-                ['总支出', f"{chart_data.get('total_expense', 0):,.2f}"],
-                ['结余', f"{chart_data.get('balance', 0):,.2f}"],
-                ['交易笔数', str(chart_data.get('transaction_count', 0))]
+                [Paragraph('项目', normal_style), Paragraph('数值', normal_style)],
+                [Paragraph('总收入', normal_style), Paragraph(f"{chart_data.get('total_income', 0):,.2f}", right_style)],
+                [Paragraph('总支出', normal_style), Paragraph(f"{chart_data.get('total_expense', 0):,.2f}", right_style)],
+                [Paragraph('结余', normal_style), Paragraph(f"{chart_data.get('balance', 0):,.2f}", right_style)],
+                [Paragraph('交易笔数', right_style), Paragraph(str(chart_data.get('transaction_count', 0)), right_style)]
             ]
             
             summary_table = Table(summary_data, colWidths=[4*cm, 4*cm])
@@ -1187,16 +1220,18 @@ def export_pdf():
             # 添加月度数据表格（如果是年度分析）
             if chart_data.get('monthly_data'):
                 elements.append(Paragraph('月度数据', title_style))
-                monthly_table_data = [['月份', '收入', '支出', '结余', '交易笔数']]
+                monthly_table_data = [
+                    [Paragraph('月份', normal_style), Paragraph('收入', normal_style), Paragraph('支出', normal_style), Paragraph('结余', normal_style), Paragraph('交易笔数', normal_style)]
+                ]
                 
                 for month in range(1, 13):
                     month_data = chart_data['monthly_data'].get(str(month), {})
                     monthly_table_data.append([
-                        f"{month}月",
-                        f"{month_data.get('total_income', 0):,.2f}",
-                        f"{month_data.get('total_expense', 0):,.2f}",
-                        f"{(month_data.get('total_income', 0) - month_data.get('total_expense', 0)):,.2f}",
-                        str(month_data.get('transaction_count', 0))
+                        Paragraph(f"{month}月", normal_style),
+                        Paragraph(f"{month_data.get('total_income', 0):,.2f}", right_style),
+                        Paragraph(f"{month_data.get('total_expense', 0):,.2f}", right_style),
+                        Paragraph(f"{(month_data.get('total_income', 0) - month_data.get('total_expense', 0)):,.2f}", right_style),
+                        Paragraph(str(month_data.get('transaction_count', 0)), right_style)
                     ])
                 
                 monthly_table = Table(monthly_table_data, colWidths=[2*cm, 2.5*cm, 2.5*cm, 2.5*cm, 1.5*cm])

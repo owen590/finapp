@@ -161,6 +161,7 @@ main {
     font-weight: 700;
     margin-bottom: 8px;
     color: #374151;
+    text-align: right;
 }
 
 .stat-label {
@@ -238,6 +239,7 @@ table th {
     text-align: left;
     font-weight: 600;
     color: #374151;
+    text-align: right;
     border-bottom: 2px solid #e5e7eb;
     font-size: 13px;
     text-transform: uppercase;
@@ -479,6 +481,7 @@ footer p {
     padding: 6px 12px;
     background: #f3f4f6;
     color: #374151;
+    text-align: right;
     border: 1px solid #d1d5db;
     border-radius: 4px;
     cursor: pointer;
