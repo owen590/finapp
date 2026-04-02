@@ -857,7 +857,7 @@ def get_daily_report(date):
             'description': t.description,
             'amount': t.amount,
             'remark': t.remark,
-            'created_at': t.created_at.isoformat()
+            'created_at': (t.created_at or datetime.now()).isoformat()
         })
     
     return jsonify({
@@ -912,7 +912,7 @@ def get_monthly_report(year, month):
             'description': t.description,
             'amount': t.amount,
             'remark': t.remark,
-            'created_at': t.created_at.isoformat()
+            'created_at': (t.created_at or datetime.now()).isoformat()
         }
         
         if t.type == '收入':
