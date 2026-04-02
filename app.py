@@ -1034,6 +1034,12 @@ def export_pdf():
             fontName=chinese_font,
             alignment=2  # ALIGN_RIGHT（数字右对齐）
         )
+        center_style = ParagraphStyle(
+            'CenterAligned',
+            parent=styles['Normal'],
+            fontName=chinese_font,
+            alignment=1  # ALIGN_CENTER（居中）
+        )
         
         # 初始化table_data变量
         table_data = []
@@ -1049,15 +1055,14 @@ def export_pdf():
             title = report_data.get('title', '图表分析报告')
         
         # 标题居中
-        title_para = Paragraph(title, title_style)
-        title_para.alignment = 1  # 1表示居中
+        title_para = Paragraph(title, center_style)
         elements.append(title_para)
         elements.append(Spacer(1, 20))
         
         # 生成表格数据
         if report_type == 'daily':
             # 日报表
-            table_data = [[Paragraph('时间', normal_style), Paragraph('收支<br/>分类', normal_style), Paragraph('明细<br/>分类', normal_style), Paragraph('摘要', normal_style), Paragraph('收入', normal_style), Paragraph('支出', normal_style), Paragraph('结余', normal_style)]]
+            table_data = [[Paragraph('时间', center_style), Paragraph('收支<br/>分类', center_style), Paragraph('明细<br/>分类', center_style), Paragraph('摘要', center_style), Paragraph('收入', center_style), Paragraph('支出', center_style), Paragraph('结余', center_style)]]
             running_balance = report_data.get('opening_balance', 0)
             # 如果有上期结余，添加首行
             if running_balance != 0:
@@ -1099,7 +1104,7 @@ def export_pdf():
         
         elif report_type == 'monthly':
             # 月报表
-            table_data = [[Paragraph('日期', normal_style), Paragraph('收支<br/>分类', normal_style), Paragraph('明细<br/>分类', normal_style), Paragraph('摘要', normal_style), Paragraph('收入', normal_style), Paragraph('支出', normal_style), Paragraph('结余', normal_style)]]
+            table_data = [[Paragraph('日期', center_style), Paragraph('收支<br/>分类', center_style), Paragraph('明细<br/>分类', center_style), Paragraph('摘要', center_style), Paragraph('收入', center_style), Paragraph('支出', center_style), Paragraph('结余', center_style)]]
             running_balance = report_data.get('opening_balance', 0)
             # 如果有上期结余，添加首行
             if running_balance != 0:
@@ -1128,7 +1133,7 @@ def export_pdf():
                         Paragraph('收入', normal_style),
                         Paragraph(t['category'], normal_style),
                         Paragraph(t['description'], normal_style),
-                        Paragraph(f"{t['amount']:,.2f}", normal_style),
+                        Paragraph(f"{t['amount']:,.2f}", right_style),
                         Paragraph('', normal_style),
                         Paragraph(f"{running_balance:,.2f}", right_style)
                     ])
@@ -1141,7 +1146,7 @@ def export_pdf():
                         Paragraph(t['category'], normal_style),
                         Paragraph(t['description'], normal_style),
                         Paragraph('', normal_style),
-                        Paragraph(f"{t['amount']:,.2f}", normal_style),
+                        Paragraph(f"{t['amount']:,.2f}", right_style),
                         Paragraph(f"{running_balance:,.2f}", right_style)
                     ])
             # 添加汇总行
@@ -1157,7 +1162,7 @@ def export_pdf():
         
         elif report_type == 'yearly':
             # 年度报表
-            table_data = [[Paragraph('月份', normal_style), Paragraph('收入总额', normal_style), Paragraph('支出总额', normal_style), Paragraph('结余', normal_style), Paragraph('交易笔数', normal_style)]]
+            table_data = [[Paragraph('月份', center_style), Paragraph('收入总额', center_style), Paragraph('支出总额', center_style), Paragraph('结余', center_style), Paragraph('交易笔数', center_style)]]
             running_balance = report_data.get('opening_balance', 0)
             # 如果有上期结余，添加首行
             if running_balance != 0:
@@ -1198,7 +1203,7 @@ def export_pdf():
             elements.append(Paragraph('统计摘要', title_style))
             
             summary_data = [
-                [Paragraph('项目', normal_style), Paragraph('数值', normal_style)],
+                [Paragraph('项目', center_style), Paragraph('数值', center_style)],
                 [Paragraph('总收入', normal_style), Paragraph(f"{chart_data.get('total_income', 0):,.2f}", right_style)],
                 [Paragraph('总支出', normal_style), Paragraph(f"{chart_data.get('total_expense', 0):,.2f}", right_style)],
                 [Paragraph('结余', normal_style), Paragraph(f"{chart_data.get('balance', 0):,.2f}", right_style)],
@@ -1221,7 +1226,7 @@ def export_pdf():
             if chart_data.get('monthly_data'):
                 elements.append(Paragraph('月度数据', title_style))
                 monthly_table_data = [
-                    [Paragraph('月份', normal_style), Paragraph('收入', normal_style), Paragraph('支出', normal_style), Paragraph('结余', normal_style), Paragraph('交易笔数', normal_style)]
+                    [Paragraph('月份', center_style), Paragraph('收入', center_style), Paragraph('支出', center_style), Paragraph('结余', center_style), Paragraph('交易笔数', center_style)]
                 ]
                 
                 for month in range(1, 13):
