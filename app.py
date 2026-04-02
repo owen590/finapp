@@ -437,6 +437,50 @@ def delete_transaction(id):
     
     return jsonify({'message': '删除成功'})
 
+@app.route('/finapp/api/transfer', methods=['POST'])
+@login_required
+def api_transfer():
+    """账户互转：转出账户减余额，转入账户加余额"""
+    data = request.get_json()
+    
+    from_id = data.get('from_account_id')
+    to_id = data.get('to_account_id')
+    amount = float(data.get('amount', 0))
+    date_str = data.get('date', datetime.now().strftime('%Y-%m-%d'))
+    remark = data.get('remark', '')
+    
+    if not from_id or not to_id or amount <= 0:
+        return jsonify({'message': '参数错误'}), 400
+    
+    if from_id == to_id:
+        return jsonify({'message': '转出和转入账户不能相同'}), 400
+    
+    from_account = Account.query.get(from_id)
+    to_account = Account.query.get(to_id)
+    
+    if not from_account or not to_account:
+        return jsonify({'message': '账户不存在'}), 404
+    
+    # 检查余额是否充足
+    if from_account.current_balance < amount:
+        return jsonify({'message': f'余额不足，当前余额 ¥{from_account.current_balance:.2f}'}), 400
+    
+    # 执行转账：转出减，转入加
+    from_account.current_balance -= amount
+    to_account.current_balance += amount
+    
+    db.session.commit()
+    
+    return jsonify({
+        'message': '转账成功',
+        'from_account': from_account.name,
+        'to_account': to_account.name,
+        'amount': amount,
+        'from_balance': from_account.current_balance,
+        'to_balance': to_account.current_balance
+    })
+
+
 @app.route('/finapp/api/distributions', methods=['GET'])
 @login_required
 def get_distributions():

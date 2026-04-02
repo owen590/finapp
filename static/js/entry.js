@@ -32,12 +32,14 @@ function initEntryPage() {
         const transactionForm = document.getElementById('transaction-form');
         const loanForm = document.getElementById('loan-form');
         const editForm = document.getElementById('edit-form');
+        const transferForm = document.getElementById('transfer-form');
         const batchForm = document.getElementById('batch-form');
         
         if (transactionForm) transactionForm.addEventListener('submit', handleTransactionSubmit);
         if (loanForm) loanForm.addEventListener('submit', handleLoanSubmit);
         if (editForm) editForm.addEventListener('submit', handleEditSubmit);
         if (batchForm) batchForm.addEventListener('submit', handleBatchSubmit);
+        if (transferForm) transferForm.addEventListener('submit', handleTransferSubmit);
 
         // 初始化：设置默认类型并填充下拉选项
         var typeSel = document.getElementById('type-select');
@@ -52,7 +54,7 @@ function initEntryPage() {
 
 async function loadAccountsForSelect() {
     try {
-        const resp = await fetch('/finapp/api/accounts', {credentials: "include"});;
+        const resp = await fetch("/finapp/api/accounts", {credentials: "include"});
         const accounts = await resp.json();
         const select = document.getElementById('account-select');
         if (!select) return;
@@ -257,7 +259,7 @@ async function handleLoanSubmit(e) {
 
 async function loadRecentTransactions() {
     try {
-        const response = await fetch('/finapp/api/transactions?page=1&per_page=5', {credentials: "include"});;
+        const response = await fetch('/finapp/api/transactions?page=1&per_page=5', {credentials: "include"});
         const data = await response.json();
         recentTransactions = data.transactions || [];
         renderRecentTransactions();
@@ -364,7 +366,7 @@ function openEditModal(transaction) {
 
 async function loadAccountsForEditSelect(selectedId) {
     try {
-        const resp = await fetch('/finapp/api/accounts', {credentials: "include"});;
+        const resp = await fetch("/finapp/api/accounts", {credentials: "include"});
         const accounts = await resp.json();
         const select = document.getElementById('edit-account-select');
         if (!select) return;
@@ -559,6 +561,53 @@ async function handleBatchSubmit(e) {
     submitBtn.textContent = '批量保存';
     showToast(`完成: ${successCount}条成功, ${errorCount}条失败`, errorCount > 0 ? 'info' : 'success');
     if (successCount > 0) { textarea.value = ''; clearPreview(); loadRecentTransactions(); }
+
+async function handleTransferSubmit(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    
+    if (!data.from_account || !data.to_account) {
+        showToast('请选择转出和转入账户', 'error');
+        return;
+    }
+    if (!data.amount || parseFloat(data.amount) <= 0) {
+        showToast('请输入有效金额', 'error');
+        return;
+    }
+    if (data.from_account === data.to_account) {
+        showToast('转出和转入账户不能相同', 'error');
+        return;
+    }
+    
+    try {
+        const resp = await fetch('/finapp/api/transfer', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                from_account_id: parseInt(data.from_account),
+                to_account_id: parseInt(data.to_account),
+                amount: parseFloat(data.amount),
+                date: data.date || new Date().toISOString().split('T')[0],
+                remark: data.remark || ''
+            })
+        });
+        if (resp.ok) {
+            showToast('转账成功');
+            e.target.reset();
+            if (typeof loadSummaryData === 'function') loadSummaryData();
+            if (typeof loadRecentTransactions === 'function') loadRecentTransactions();
+        } else {
+            const err = await resp.json();
+            showToast('转账失败: ' + (err.message || resp.status), 'error');
+        }
+    } catch (e) {
+        console.error('转账失败', e);
+        showToast('转账失败: ' + e.message, 'error');
+    }
+}
+
 }
 
 function formatDateTime(dateTimeStr) {
