@@ -468,7 +468,7 @@
             
             if (yearlyTrendChart) {
                 yearlyTrendChart.setOption({
-                    title: { text: `${year}年收支趋势分析`, left: 'right', top: 5 },
+                    title: { text: `${year}年收支趋势分析`, left: 'center', top: 5 },
                     tooltip: { trigger: 'axis' },
                     legend: { data: ['收入', '支出', '累计结余'], orient: 'horizontal', left: 'right', bottom: 5 },
                     grid: { bottom: 60 },
@@ -485,7 +485,7 @@
             // 收入饼图
             if (incomePieChart) {
                 incomePieChart.setOption({
-                    title: { text: `${year}年收入分类`, left: 'right' },
+                    title: { text: `${year}年收入分类`, left: 'center' },
                     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: '{b}: ¥{c}' },
                     grid: { left: '3%', right: '12%', bottom: '3%', top: '15%', containLabel: true },
                     xAxis: { type: 'value' },
@@ -506,7 +506,7 @@
             // 支出饼图
             if (expensePieChart) {
                 expensePieChart.setOption({
-                    title: { text: `${year}年支出分类`, left: 'right' },
+                    title: { text: `${year}年支出分类`, left: 'center' },
                     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: '{b}: ¥{c}' },
                     grid: { left: '3%', right: '12%', bottom: '3%', top: '15%', containLabel: true },
                     xAxis: { type: 'value' },
@@ -560,7 +560,7 @@
             
             if (yearlyTrendChart) {
                 yearlyTrendChart.setOption({
-                    title: { text: `${year}年${month}月收支趋势分析`, left: 'right', top: 5 },
+                    title: { text: `${year}年${month}月收支趋势分析`, left: 'center', top: 5 },
                     tooltip: { trigger: 'axis' },
                     legend: { data: ['收入', '支出', '累计结余'], orient: 'horizontal', left: 'right', bottom: 5 },
                     grid: { bottom: 60 },
@@ -595,7 +595,7 @@
             if (incomePieChart) {
                 const sortedIncomeData = [...incomePieData].sort((a, b) => b.value - a.value);
                 incomePieChart.setOption({
-                    title: { text: `${year}年${month}月收入分类`, left: 'right' },
+                    title: { text: `${year}年${month}月收入分类`, left: 'center' },
                     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: '{b}: ¥{c}' },
                     grid: { left: '3%', right: '12%', bottom: '3%', top: '15%', containLabel: true },
                     xAxis: { type: 'value' },
@@ -612,7 +612,7 @@
             if (expensePieChart) {
                 const sortedExpenseData = [...expensePieData].sort((a, b) => b.value - a.value);
                 expensePieChart.setOption({
-                    title: { text: `${year}年${month}月支出分类`, left: 'right' },
+                    title: { text: `${year}年${month}月支出分类`, left: 'center' },
                     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: '{b}: ¥{c}' },
                     grid: { left: '3%', right: '12%', bottom: '3%', top: '15%', containLabel: true },
                     xAxis: { type: 'value' },
