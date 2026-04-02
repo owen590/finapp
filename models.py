@@ -24,7 +24,7 @@ class Account(db.Model):
             'initial_balance': self.initial_balance,
             'current_balance': self.current_balance,
             'remark': self.remark,
-            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            'created_at': (self.created_at or datetime.now()).strftime('%Y-%m-%d %H:%M:%S')
         }
 
 class Transaction(db.Model):
@@ -58,7 +58,7 @@ class Transaction(db.Model):
             'year': self.year,
             'account_id': self.account_id,
             'bitable_record_id': self.bitable_record_id,
-            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            'created_at': (self.created_at or datetime.now()).strftime('%Y-%m-%d %H:%M:%S')
         }
 
 class Loan(db.Model):
@@ -80,7 +80,7 @@ class Loan(db.Model):
             'amount': self.amount,
             'status': self.status,
             'return_date': self.return_date.strftime('%Y-%m-%d') if self.return_date else None,
-            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            'created_at': (self.created_at or datetime.now()).strftime('%Y-%m-%d %H:%M:%S')
         }
 
 class Distribution(db.Model):
@@ -98,7 +98,7 @@ class Distribution(db.Model):
             'date': self.date.strftime('%Y-%m-%d') if self.date else None,
             'person': self.person,
             'amount': self.amount,
-            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            'created_at': (self.created_at or datetime.now()).strftime('%Y-%m-%d %H:%M:%S')
         }
 
 class Capital(db.Model):
@@ -118,7 +118,7 @@ class Capital(db.Model):
             'investor': self.investor,
             'amount': self.amount,
             'description': self.description,
-            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            'created_at': (self.created_at or datetime.now()).strftime('%Y-%m-%d %H:%M:%S')
         }
 
 class User(UserMixin, db.Model):
@@ -141,5 +141,5 @@ class User(UserMixin, db.Model):
             'id': self.id,
             'username': self.username,
             'role': self.role,
-            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            'created_at': (self.created_at or datetime.now()).strftime('%Y-%m-%d %H:%M:%S')
         }
