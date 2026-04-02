@@ -10,7 +10,7 @@ import os
 
 app = Flask(__name__)
 app.config.from_object(Config)
-CORS(app)
+CORS(app, supports_credentials=True)
 
 db.init_app(app)
 
@@ -20,6 +20,13 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = '请先登录以访问此页面'
 login_manager.login_message_category = 'info'
+
+@login_manager.unauthorized_handler
+def unauthorized_handler():
+    from flask import jsonify, request, redirect, url_for
+    if request.path.startswith('/finapp/api') or request.path.startswith('/api'):
+        return jsonify({'error': '请先登录'}), 401
+    return redirect(url_for('login'))
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -77,7 +84,8 @@ def login():
         
         user = User.query.filter_by(username=username).first()
         if user and user.check_password(password):
-            login_user(user)
+            remember = request.form.get('remember') == 'on'
+            login_user(user, remember=remember)
             flash('登录成功', 'success')
             return redirect(url_for('index'))
         else:
@@ -252,7 +260,7 @@ def create_transaction():
     if transaction.account_id:
         account = Account.query.get(transaction.account_id)
         if account:
-            if transaction.type == '入账':
+            if transaction.type == '收入':
                 account.current_balance += transaction.amount
             else:
                 account.current_balance -= transaction.amount
@@ -329,7 +337,7 @@ def update_transaction(id):
     if old_account_id:
         old_account = Account.query.get(old_account_id)
         if old_account:
-            if old_type == '入账':
+            if old_type == '收入':
                 old_account.current_balance -= old_amount
             else:
                 old_account.current_balance += old_amount
@@ -338,7 +346,7 @@ def update_transaction(id):
     if transaction.account_id:
         new_account = Account.query.get(transaction.account_id)
         if new_account:
-            if transaction.type == '入账':
+            if transaction.type == '收入':
                 new_account.current_balance += transaction.amount
             else:
                 new_account.current_balance -= transaction.amount
@@ -379,7 +387,7 @@ def delete_transaction(id):
     if transaction.account_id:
         account = Account.query.get(transaction.account_id)
         if account:
-            if transaction.type == '入账':
+            if transaction.type == '收入':
                 account.current_balance -= transaction.amount
             else:
                 account.current_balance += transaction.amount
@@ -546,8 +554,8 @@ def get_statistics():
     
     transactions = query.all()
     
-    total_income = sum(t.amount for t in transactions if t.type == '入账')
-    total_expense = sum(t.amount for t in transactions if t.type == '出账')
+    total_income = sum(t.amount for t in transactions if t.type == '收入')
+    total_expense = sum(t.amount for t in transactions if t.type == '支出')
     
     return jsonify({
         'total_income': total_income,
@@ -637,7 +645,7 @@ def recalculate_account_balances():
     for account in Account.query.all():
         balance = account.initial_balance
         for t in Transaction.query.filter_by(account_id=account.id).order_by(Transaction.date):
-            if t.type == '入账':
+            if t.type == '收入':
                 balance += t.amount
             else:
                 balance -= t.amount
@@ -752,13 +760,13 @@ def get_daily_report(date):
     transactions = Transaction.query.filter_by(date=target_date).all()
     
     # 计算统计数据
-    total_income = sum(t.amount for t in transactions if t.type == '入账')
-    total_expense = sum(t.amount for t in transactions if t.type == '出账')
+    total_income = sum(t.amount for t in transactions if t.type == '收入')
+    total_expense = sum(t.amount for t in transactions if t.type == '支出')
     
     # 计算上期结余（当天之前的所有交易结余）
     previous_transactions = Transaction.query.filter(Transaction.date < target_date).all()
-    previous_income = sum(t.amount for t in previous_transactions if t.type == '入账')
-    previous_expense = sum(t.amount for t in previous_transactions if t.type == '出账')
+    previous_income = sum(t.amount for t in previous_transactions if t.type == '收入')
+    previous_expense = sum(t.amount for t in previous_transactions if t.type == '支出')
     opening_balance = previous_income - previous_expense
     
     # 格式化交易数据
@@ -804,8 +812,8 @@ def get_monthly_report(year, month):
     
     # 计算上期结余（当月1日之前所有交易的结余）
     previous_transactions = Transaction.query.filter(Transaction.date < start_date).all()
-    previous_income = sum(t.amount for t in previous_transactions if t.type == '入账')
-    previous_expense = sum(t.amount for t in previous_transactions if t.type == '出账')
+    previous_income = sum(t.amount for t in previous_transactions if t.type == '收入')
+    previous_expense = sum(t.amount for t in previous_transactions if t.type == '支出')
     opening_balance = previous_income - previous_expense
     
     # 按日期分组
@@ -830,7 +838,7 @@ def get_monthly_report(year, month):
             'created_at': t.created_at.isoformat()
         }
         
-        if t.type == '入账':
+        if t.type == '收入':
             daily_data[date_str]['income'].append(transaction_info)
             total_income += t.amount
         else:
@@ -865,8 +873,8 @@ def get_yearly_report(year):
     
     # 计算上期结余（当年1月1日之前所有交易的结余）
     previous_transactions = Transaction.query.filter(Transaction.date < start_date).all()
-    previous_income = sum(t.amount for t in previous_transactions if t.type == '入账')
-    previous_expense = sum(t.amount for t in previous_transactions if t.type == '出账')
+    previous_income = sum(t.amount for t in previous_transactions if t.type == '收入')
+    previous_expense = sum(t.amount for t in previous_transactions if t.type == '支出')
     opening_balance = previous_income - previous_expense
     
     # 按月份分组
@@ -883,7 +891,7 @@ def get_yearly_report(year):
                 'transaction_count': 0
             }
         
-        if t.type == '入账':
+        if t.type == '收入':
             monthly_data[month_str]['total_income'] += t.amount
             total_income += t.amount
         else:
@@ -927,35 +935,40 @@ def export_pdf():
         
         # 注册中文字体
         try:
+            chinese_font = 'Helvetica'
+            font_registered = False
+
+            # Linux中文字体
+            linux_fonts = [
+                '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc',
+                '/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc',
+            ]
             # Windows系统字体路径
             windows_fonts_dir = os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts')
-            
-            # 优先使用微软雅黑，如果不存在则使用宋体
-            font_paths = [
-                os.path.join(windows_fonts_dir, 'msyh.ttc'),  # 微软雅黑
-                os.path.join(windows_fonts_dir, 'simsun.ttc'),  # 宋体
-                os.path.join(windows_fonts_dir, 'simhei.ttf'),  # 黑体
+            windows_fonts = [
+                (os.path.join(windows_fonts_dir, 'msyh.ttc'), 'YaHei'),
+                (os.path.join(windows_fonts_dir, 'simsun.ttc'), 'SongTi'),
+                (os.path.join(windows_fonts_dir, 'simhei.ttf'), 'HeiTi'),
             ]
-            
-            chinese_font = 'Helvetica'
-            
-            # 尝试注册字体
-            for font_path in font_paths:
+
+            linux_font_list = [(p, 'MicroHei') for p in linux_fonts]
+            all_fonts = linux_font_list + windows_fonts
+
+            for font_path, font_name in all_fonts:
                 if os.path.exists(font_path):
                     try:
-                        font_name = os.path.splitext(os.path.basename(font_path))[0]
                         pdfmetrics.registerFont(TTFont(font_name, font_path))
                         chinese_font = font_name
                         print(f"成功注册字体: {font_name} from {font_path}")
+                        font_registered = True
                         break
                     except Exception as e:
                         print(f"注册字体失败: {font_path}, error: {e}")
                         continue
-            
-            # 如果仍然没有找到中文字体，使用默认字体
-            if chinese_font == 'Helvetica':
-                print("未找到中文字体，使用默认字体")
-                
+
+            if not font_registered:
+                print("未找到中文字体，使用默认字体 Helvetica（中文将显示为方块）")
+
         except Exception as e:
             print(f"字体检测错误: {e}")
             chinese_font = 'Helvetica'
@@ -979,7 +992,14 @@ def export_pdf():
         normal_style = ParagraphStyle(
             'NormalChinese',
             parent=styles['Normal'],
-            fontName=chinese_font
+            fontName=chinese_font,
+            alignment=0  # ALIGN_LEFT（默认，文本左对齐）
+        )
+        right_style = ParagraphStyle(
+            'RightAligned',
+            parent=styles['Normal'],
+            fontName=chinese_font,
+            alignment=2  # ALIGN_RIGHT（数字右对齐）
         )
         
         # 初始化table_data变量
@@ -1004,7 +1024,7 @@ def export_pdf():
         # 生成表格数据
         if report_type == 'daily':
             # 日报表
-            table_data = [[Paragraph('时间', normal_style), Paragraph('收支<br/>分类', normal_style), Paragraph('明细<br/>分类', normal_style), Paragraph('摘要', normal_style), Paragraph('入账', normal_style), Paragraph('出账', normal_style), Paragraph('结余', normal_style)]]
+            table_data = [[Paragraph('时间', normal_style), Paragraph('收支<br/>分类', normal_style), Paragraph('明细<br/>分类', normal_style), Paragraph('摘要', normal_style), Paragraph('收入', normal_style), Paragraph('支出', normal_style), Paragraph('结余', normal_style)]]
             running_balance = report_data.get('opening_balance', 0)
             # 如果有上期结余，添加首行
             if running_balance != 0:
@@ -1019,8 +1039,8 @@ def export_pdf():
                 ])
             for t in report_data.get('transactions', []):
                 time = datetime.fromisoformat(t['created_at']).strftime('%H:%M')
-                income = t['amount'] if t['type'] == '入账' else 0
-                expense = t['amount'] if t['type'] == '出账' else 0
+                income = t['amount'] if t['type'] == '收入' else 0
+                expense = t['amount'] if t['type'] == '支出' else 0
                 running_balance = running_balance + income - expense
                 income_str = f"{income:,.2f}" if income > 0 else ''
                 expense_str = f"{expense:,.2f}" if expense > 0 else ''
@@ -1046,7 +1066,7 @@ def export_pdf():
         
         elif report_type == 'monthly':
             # 月报表
-            table_data = [[Paragraph('日期', normal_style), Paragraph('收支<br/>分类', normal_style), Paragraph('明细<br/>分类', normal_style), Paragraph('摘要', normal_style), Paragraph('入账', normal_style), Paragraph('出账', normal_style), Paragraph('结余', normal_style)]]
+            table_data = [[Paragraph('日期', normal_style), Paragraph('收支<br/>分类', normal_style), Paragraph('明细<br/>分类', normal_style), Paragraph('摘要', normal_style), Paragraph('收入', normal_style), Paragraph('支出', normal_style), Paragraph('结余', normal_style)]]
             running_balance = report_data.get('opening_balance', 0)
             # 如果有上期结余，添加首行
             if running_balance != 0:
@@ -1072,7 +1092,7 @@ def export_pdf():
                     running_balance = running_balance + t['amount']
                     table_data.append([
                         Paragraph(short_date_str, normal_style),
-                        Paragraph('入账', normal_style),
+                        Paragraph('收入', normal_style),
                         Paragraph(t['category'], normal_style),
                         Paragraph(t['description'], normal_style),
                         Paragraph(f"{t['amount']:,.2f}", normal_style),
@@ -1084,7 +1104,7 @@ def export_pdf():
                     running_balance = running_balance - t['amount']
                     table_data.append([
                         Paragraph(short_date_str, normal_style),
-                        Paragraph('出账', normal_style),
+                        Paragraph('支出', normal_style),
                         Paragraph(t['category'], normal_style),
                         Paragraph(t['description'], normal_style),
                         Paragraph('', normal_style),
@@ -1104,7 +1124,7 @@ def export_pdf():
         
         elif report_type == 'yearly':
             # 年度报表
-            table_data = [[Paragraph('月份', normal_style), Paragraph('入账总额', normal_style), Paragraph('出账总额', normal_style), Paragraph('结余', normal_style), Paragraph('交易笔数', normal_style)]]
+            table_data = [[Paragraph('月份', normal_style), Paragraph('收入总额', normal_style), Paragraph('支出总额', normal_style), Paragraph('结余', normal_style), Paragraph('交易笔数', normal_style)]]
             running_balance = report_data.get('opening_balance', 0)
             # 如果有上期结余，添加首行
             if running_balance != 0:
@@ -1196,7 +1216,7 @@ def export_pdf():
             if report_type == 'daily' or report_type == 'monthly':
                 # 日报表和月报表：使用新的7列结构
                 # 调整列宽，确保能显示百万位数字，摘要和明细分类有足够宽度
-                col_widths = [1.5*cm, 1.5*cm, 2.5*cm, 5*cm, 2.5*cm, 2.5*cm, 2.5*cm]
+                col_widths = [1.5*cm, 1.5*cm, 2.5*cm, 4*cm, 3*cm, 3*cm, 3*cm]
             else:
                 # 年度报表：调整列宽，确保对齐
                 col_widths = [2.5*cm, 3*cm, 3*cm, 3*cm, 2.5*cm]
@@ -1211,7 +1231,7 @@ def export_pdf():
                     ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                     ('ALIGN', (0, 0), (-1, 0), 'CENTER'),  # 表头水平居中
                     ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),  # 表头垂直居中
-                    ('ALIGN', (4, 1), (6, -1), 'RIGHT'),  # 入账、出账、结余列右对齐
+                    ('ALIGN', (4, 1), (6, -1), 'RIGHT'),  # 收入、支出、结余列右对齐
                     ('VALIGN', (0, 1), (-1, -1), 'MIDDLE'),  # 内容垂直居中
                     ('FONTNAME', (0, 0), (-1, 0), chinese_font),
                     ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
@@ -1226,7 +1246,7 @@ def export_pdf():
                     ('ALIGN', (0, 0), (-1, 0), 'CENTER'),  # 表头水平居中
                     ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),  # 表头垂直居中
                     ('ALIGN', (0, 1), (0, -1), 'CENTER'),  # 月份列居中
-                    ('ALIGN', (1, 1), (3, -1), 'RIGHT'),  # 入账总额、出账总额、结余列右对齐
+                    ('ALIGN', (1, 1), (3, -1), 'RIGHT'),  # 收入总额、支出总额、结余列右对齐
                     ('ALIGN', (4, 1), (4, -1), 'RIGHT'),  # 交易笔数列右对齐
                     ('VALIGN', (0, 1), (-1, -1), 'MIDDLE'),  # 内容垂直居中
                     ('FONTNAME', (0, 0), (-1, 0), chinese_font),
@@ -1266,4 +1286,4 @@ if __name__ == '__main__':
     import os
     port = int(os.environ.get('PORT', 5000))
     
-    app.run(debug=True, host='0.0.0.0', port=port)
+    app.run(debug=False, host='0.0.0.0', port=port)

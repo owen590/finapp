@@ -1,11 +1,6 @@
 // 数据录入页面专用JavaScript
 
-// 全局劫持fetch，自动带上credentials
-const _origFetch = window.fetch;
-window.fetch = function(input, init = {}) {
-    init.credentials = 'include';
-    return _origFetch(input, init);
-};
+
 
 let currentTab = 'transaction';
 let recentTransactions = [];
@@ -44,6 +39,9 @@ function initEntryPage() {
         if (editForm) editForm.addEventListener('submit', handleEditSubmit);
         if (batchForm) batchForm.addEventListener('submit', handleBatchSubmit);
 
+        // 初始化：设置默认类型并填充下拉选项
+        var typeSel = document.getElementById('type-select');
+        if (typeSel) { typeSel.value = '支出'; updateCategoryByType(); }
         loadAccountsForSelect();
         loadRecentTransactions();
         if (loanForm) loadRecentLoans();
@@ -54,7 +52,7 @@ function initEntryPage() {
 
 async function loadAccountsForSelect() {
     try {
-        const resp = await fetch('/api/accounts', {credentials: "include"});;
+        const resp = await fetch('/finapp/api/accounts', {credentials: "include"});;
         const accounts = await resp.json();
         const select = document.getElementById('account-select');
         if (!select) return;
@@ -76,13 +74,13 @@ function updateSubCategories() {
     const subGroup = document.getElementById('sub-category-group');
     if (!subSelect) return;
     
-    // 入账无明细
-    if (!category || category === '入账') {
+    // 收入无明细
+    if (!category || category === '收入') {
         if (subGroup) subGroup.style.display = 'none';
         return;
     }
     
-    // 出账显示两级联动
+    // 支出显示两级联动
     if (CATEGORIES[category]) {
         if (subGroup) subGroup.style.display = '';
         subSelect.innerHTML = '<option value="">请选择明细</option>';
@@ -108,14 +106,14 @@ function updateCategoryByType() {
     if (subSelect) subSelect.innerHTML = '<option value="">请选择明细</option>';
     if (subGroup) subGroup.style.display = 'none';
     
-    if (type === '入账') {
+    if (type === '收入') {
         INCOME_CATEGORIES.forEach(cat => {
             const opt = document.createElement('option');
             opt.value = cat;
             opt.textContent = cat;
             catSelect.appendChild(opt);
         });
-    } else if (type === '出账') {
+    } else if (type === '支出') {
         Object.keys(CATEGORIES).forEach(cat => {
             const opt = document.createElement('option');
             opt.value = cat;
@@ -131,7 +129,7 @@ function updateEditSubCategories(selectedSub) {
     const subGroup = document.getElementById('edit-sub-category-group');
     if (!subSelect) return;
     
-    if (!category || category === '入账' || !CATEGORIES[category]) {
+    if (!category || category === '收入' || !CATEGORIES[category]) {
         if (subGroup) subGroup.style.display = 'none';
         return;
     }
@@ -158,14 +156,14 @@ function updateEditCategoryByType() {
     if (subSelect) subSelect.innerHTML = '<option value="">请选择明细</option>';
     if (subGroup) subGroup.style.display = 'none';
     
-    if (type === '入账') {
+    if (type === '收入') {
         INCOME_CATEGORIES.forEach(cat => {
             const opt = document.createElement('option');
             opt.value = cat;
             opt.textContent = cat;
             catSelect.appendChild(opt);
         });
-    } else if (type === '出账') {
+    } else if (type === '支出') {
         Object.keys(CATEGORIES).forEach(cat => {
             const opt = document.createElement('option');
             opt.value = cat;
@@ -206,13 +204,13 @@ async function handleTransactionSubmit(e) {
         showToast('请选择分类', 'error');
         return;
     }
-    if (data.type === '出账' && !data.sub_category) {
+    if (data.type === '支出' && !data.sub_category) {
         showToast('请选择明细', 'error');
         return;
     }
     
     try {
-        const response = await fetch('/api/transactions', {
+        const response = await fetch('/finapp/api/transactions', {credentials:"include", 
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(data)
@@ -239,7 +237,7 @@ async function handleLoanSubmit(e) {
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData);
     try {
-        const response = await fetch('/api/loans', {
+        const response = await fetch('/finapp/api/loans', {credentials:"include", 
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(data)
@@ -259,7 +257,7 @@ async function handleLoanSubmit(e) {
 
 async function loadRecentTransactions() {
     try {
-        const response = await fetch('/api/transactions?page=1&per_page=5', {credentials: "include"});;
+        const response = await fetch('/finapp/api/transactions?page=1&per_page=5', {credentials: "include"});;
         const data = await response.json();
         recentTransactions = data.transactions || [];
         renderRecentTransactions();
@@ -294,15 +292,15 @@ function renderRecentTransactions() {
 }
 
 async function loadRecentLoans() {
-    try {
-        const response = await fetch('/api/loans', {credentials: "include"});;
-        const loans = await response.json();
-        recentLoans = (loans || []).slice(0, 5);
-        renderRecentLoans();
-    } catch (error) {
-        console.error('加载借款记录失败:', error);
+        try {
+            const response = await fetch('/finapp/api/loans', {credentials:"include", method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(data)});
+            const loans = await response.json();
+            recentLoans = (loans || []).slice(0, 5);
+            renderRecentLoans();
+        } catch (error) {
+            console.error('加载借款记录失败:', error);
+        }
     }
-}
 
 function renderRecentLoans() {
     const tbody = document.getElementById('recent-loans');
@@ -325,13 +323,13 @@ function renderRecentLoans() {
 }
 
 async function editTransaction(id) {
-    try {
-        const response = await fetch(`/api/transactions/${id}`, {credentials: "include"});;
-        if (response.ok) {
-            const transaction = await response.json();
-            openEditModal(transaction);
-        }
-    } catch (error) {
+        try {
+            const response = await fetch(`/finapp/api/transactions/${id}`, {credentials:"include", method: "DELETE"});
+            if (response.ok) {
+                const transaction = await response.json();
+                openEditModal(transaction);
+            }
+        } catch (error) {
         showToast('获取交易信息失败', 'error');
     }
 }
@@ -352,7 +350,7 @@ function openEditModal(transaction) {
         const catSelect = document.getElementById('edit-category-select');
         if (catSelect) {
             catSelect.value = transaction.category || '';
-            if (transaction.type === '出账') {
+            if (transaction.type === '支出') {
                 updateEditSubCategories(transaction.sub_category || '');
             }
         }
@@ -366,7 +364,7 @@ function openEditModal(transaction) {
 
 async function loadAccountsForEditSelect(selectedId) {
     try {
-        const resp = await fetch('/api/accounts', {credentials: "include"});;
+        const resp = await fetch('/finapp/api/accounts', {credentials: "include"});;
         const accounts = await resp.json();
         const select = document.getElementById('edit-account-select');
         if (!select) return;
@@ -401,13 +399,13 @@ async function handleEditSubmit(e) {
         showToast('请选择分类', 'error');
         return;
     }
-    if (data.type === '出账' && !data.sub_category) {
+    if (data.type === '支出' && !data.sub_category) {
         showToast('请选择明细', 'error');
         return;
     }
     
     try {
-        const response = await fetch(`/api/transactions/${id}`, {
+        const response = await fetch(`/finapp/api/transactions/${id}`, {credentials:"include", 
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(data)
@@ -427,7 +425,7 @@ async function handleEditSubmit(e) {
 async function deleteTransaction(id) {
     if (!confirm('确定要删除这条交易记录吗？')) return;
     try {
-        const response = await fetch(`/api/transactions/${id}`, {"credentials":"include", "method: 'DELETE'});
+        const response = await fetch(`/finapp/api/transactions/${id}`, {credentials:"include", method: "DELETE"});
         if (response.ok) {
             showToast('删除成功！');
             loadRecentTransactions();
@@ -442,7 +440,7 @@ async function deleteTransaction(id) {
 
 async function returnLoan(id) {
     try {
-        await fetch(`/api/loans/${id}`, {
+        await fetch(`/finapp/api/loans/${id}`, {credentials:"include", 
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({status: '已归还', return_date: new Date().toISOString().split('T')[0]})
@@ -457,7 +455,7 @@ async function returnLoan(id) {
 async function deleteLoan(id) {
     if (!confirm('确定删除？')) return;
     try {
-        await fetch(`/api/loans/${id}`, {"credentials":"include", "method: 'DELETE'});
+        await fetch(`/finapp/api/loans/${id}`, {credentials:"include", method: "DELETE"});
         showToast('删除成功');
         loadRecentLoans();
     } catch (error) {
@@ -551,7 +549,7 @@ async function handleBatchSubmit(e) {
     
     for (const t of transactions) {
         try {
-            const resp = await fetch('/api/transactions', {"credentials":"include", "method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(t)});
+            const resp = await fetch('/finapp/api/transactions', {credentials:"include", method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(t)});
             if (resp.ok) successCount++; else errorCount++;
         } catch { errorCount++; }
         await new Promise(r => setTimeout(r, 30));
@@ -573,3 +571,5 @@ window.onclick = function(event) {
     const modal = document.getElementById('edit-modal');
     if (event.target === modal) closeEditModal();
 };
+
+document.addEventListener('DOMContentLoaded', initEntryPage);

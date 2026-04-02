@@ -103,7 +103,7 @@ function setupDateDefaults() {
 // 生成报表
 async function generateReport() {
     const reportType = currentReportType;
-    let url = '/api/reports';
+    let url = '/finapp/api/reports';
     let params = [];
     
     // 图表分析使用年度报表数据
@@ -224,19 +224,19 @@ function renderDailyReport(data) {
         
         sortedTransactions.forEach(transaction => {
             const row = document.createElement('tr');
-            row.className = transaction.type === '入账' ? 'income-row' : 'expense-row';
+            row.className = transaction.type === '收入' ? 'income-row' : 'expense-row';
             
             const time = new Date(transaction.created_at).toLocaleTimeString('zh-CN', {
                 hour: '2-digit',
                 minute: '2-digit'
             });
             
-            const income = transaction.type === '入账' ? transaction.amount : 0;
-            const expense = transaction.type === '出账' ? transaction.amount : 0;
+            const income = transaction.type === '收入' ? transaction.amount : 0;
+            const expense = transaction.type === '支出' ? transaction.amount : 0;
             runningBalance = runningBalance + income - expense;
             
-            const incomeStr = transaction.type === '入账' ? `¥${formatAmount(transaction.amount)}` : '';
-            const expenseStr = transaction.type === '出账' ? `¥${formatAmount(transaction.amount)}` : '';
+            const incomeStr = transaction.type === '收入' ? `¥${formatAmount(transaction.amount)}` : '';
+            const expenseStr = transaction.type === '支出' ? `¥${formatAmount(transaction.amount)}` : '';
             const balanceStr = `¥${formatAmount(runningBalance)}`;
             
             row.innerHTML = `
@@ -314,7 +314,7 @@ function renderMonthlyReport(data) {
                 
                 row.innerHTML = `
                     <td>${date}</td>
-                    <td>入账</td>
+                    <td>收入</td>
                     <td>${transaction.category}</td>
                     <td>${transaction.description}</td>
                     <td style="color: #10b981; text-align: right;">${income}</td>
@@ -337,7 +337,7 @@ function renderMonthlyReport(data) {
                 
                 row.innerHTML = `
                     <td>${date}</td>
-                    <td>出账</td>
+                    <td>支出</td>
                     <td>${transaction.category}</td>
                     <td>${transaction.description}</td>
                     <td style="color: #10b981; text-align: right;">${income}</td>
@@ -435,7 +435,7 @@ async function exportToPDF() {
     }
     
     try {
-        const response = await fetch('/api/export-pdf', {
+        const response = await fetch('/finapp/api/export-pdf', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

@@ -4,22 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>账户资产 - 财务系统</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/entry.css') }}">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/entry.css">
 </head>
 <body>
     <div class="container">
         <header>
             <h1>财务系统</h1>
             <nav>
-                <a href="{{ url_for('index') }}">首页</a>
-                <a href="{{ url_for('entry') }}">录入</a>
-                <a href="{{ url_for('accounts_page') }}" class="active">账户资产</a>
-                <a href="{{ url_for('reports') }}">报表</a>
-                <a href="{{ url_for('export') }}">导出</a>
+                <a href="/finapp/">首页</a>
+                <a href="/finapp/entry">录入</a>
+                <a href="/finapp/accounts" class="active">账户资产</a>
+                <a href="/finapp/reports">报表</a>
+                <a href="/finapp/export">导出</a>
                 {% if current_user.is_authenticated %}
-                <a href="{{ url_for('users') }}">用户</a>
-                <a href="{{ url_for('logout') }}" style="float: right;">注销</a>
+                <a href="/finapp/users">用户</a>
+                <a href="/finapp/logout" style="float: right;">注销</a>
                 <span style="float: right; margin-left: 20px; color: white;">欢迎，{{ current_user.username }}</span>
                 {% endif %}
             </nav>
@@ -29,6 +29,7 @@
             <section class="stats-section">
                 <h2>账户概览</h2>
                 <div class="stats-grid" id="accounts-overview">
+                    <div style="padding:20px;color:#999;">加载中...</div>
                 </div>
             </section>
 
@@ -47,6 +48,7 @@
                             </tr>
                         </thead>
                         <tbody id="accounts-table">
+                            <tr><td colspan="6" style="text-align:center;color:#999;">加载中...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -86,16 +88,12 @@
                     <div class="form-actions">
                         <button type="submit" class="btn-primary" id="submit-btn">添加账户</button>
                         <button type="button" class="btn-secondary" onclick="resetForm()">重置</button>
-                        <button type="button" class="btn-secondary" onclick="recalculateBalances()" style="float:right; background:#e67e22;">重算余额</button>
                     </div>
                 </form>
             </section>
 
             <section style="margin-top: 30px; background: #fff3cd; border-radius: 8px; padding: 20px;">
-                <h2 style="color: #856404;">⚠️ 数据管理</h2>
-                <p style="color: #856404; margin-bottom: 15px;">以下操作不可逆，请谨慎操作。</p>
-                <button onclick="clearTransactions()" class="btn btn-danger" style="margin-right: 10px;">清空所有交易记录</button>
-                <button onclick="clearAccounts()" class="btn btn-danger">清空所有账户和交易</button>
+
             </section>
         </main>
 
@@ -149,108 +147,114 @@
     <div id="toast" class="toast"></div>
 
     <script>
-        let accounts = [];
+        // API基础路径 - 所有请求通过nginx代理到 /finapp/api/
+        var API_BASE = '/finapp/api';
+
+        var accounts = [];
+
+        async function apiFetch(path, options) {
+            var url = API_BASE + path;
+            var resp = await fetch(url, {
+                credentials: 'include',
+                headers: {'Content-Type': 'application/json'},
+                ...options
+            });
+            if (resp.status === 302 || resp.redirected) {
+                // Session过期，重定向到登录
+                window.location.href = '/finapp/login?next=' + encodeURIComponent(window.location.pathname);
+                throw new Error('SESSION_EXPIRED');
+            }
+            if (!resp.ok) {
+                var err = await resp.text();
+                throw new Error('API Error ' + resp.status + ': ' + err);
+            }
+            return resp.json();
+        }
 
         async function loadAccounts() {
             try {
-                const resp = await fetch('/api/accounts', {credentials: 'include'});
-                accounts = await resp.json();
+                accounts = await apiFetch('/accounts');
                 renderAccounts();
                 renderOverview();
             } catch (e) {
-                showToast('加载账户失败', 'error');
+                if (e.message === 'SESSION_EXPIRED') return;
+                console.error('loadAccounts error:', e);
+                showToast('加载账户失败: ' + e.message, 'error');
             }
         }
 
         function renderOverview() {
-            const total = accounts.reduce((sum, a) => sum + a.current_balance, 0);
-            const container = document.getElementById('accounts-overview');
-            
-            const typeGroups = {};
-            accounts.forEach(a => {
-                const t = a.account_type || '其他';
+            var total = accounts.reduce(function(sum, a) { return sum + a.current_balance; }, 0);
+            var container = document.getElementById('accounts-overview');
+            var typeGroups = {};
+            accounts.forEach(function(a) {
+                var t = a.account_type || '其他';
                 if (!typeGroups[t]) typeGroups[t] = 0;
                 typeGroups[t] += a.current_balance;
             });
 
-            let html = `<div class="stat-card balance">
-                <div class="stat-value">¥${total.toFixed(2)}</div>
-                <div class="stat-label">总资产</div>
-            </div>`;
-            
-            for (const [type, amount] of Object.entries(typeGroups)) {
-                html += `<div class="stat-card income">
-                    <div class="stat-value">¥${amount.toFixed(2)}</div>
-                    <div class="stat-label">${type}</div>
-                </div>`;
+            var html = '<div class="stat-card balance"><div class="stat-value">¥' + total.toFixed(2) + '</div><div class="stat-label">总资产</div></div>';
+            for (var type in typeGroups) {
+                html += '<div class="stat-card income"><div class="stat-value">¥' + typeGroups[type].toFixed(2) + '</div><div class="stat-label">' + type + '</div></div>';
             }
-            
             container.innerHTML = html;
         }
 
         function renderAccounts() {
-            const tbody = document.getElementById('accounts-table');
-            tbody.innerHTML = '';
-            
+            var tbody = document.getElementById('accounts-table');
             if (accounts.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">暂无账户，请添加</td></tr>';
                 return;
             }
-            
-            accounts.forEach(a => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><strong>${a.name}</strong></td>
-                    <td>${a.account_type || '-'}</td>
-                    <td>¥${a.initial_balance.toFixed(2)}</td>
-                    <td style="font-weight:bold;color:${a.current_balance >= 0 ? '#27ae60' : '#e74c3c'}">¥${a.current_balance.toFixed(2)}</td>
-                    <td>${a.remark || '-'}</td>
-                    <td>
-                        <button class="btn-primary btn-sm" onclick="editAccount(${a.id})">编辑</button>
-                        <button class="btn-danger btn-sm" onclick="deleteAccount(${a.id})">删除</button>
-                    </td>
-                `;
-                tbody.appendChild(row);
+            var html = '';
+            accounts.forEach(function(a) {
+                var colorStyle = a.current_balance >= 0 ? '#27ae60' : '#e74c3c';
+                html += '<tr>' +
+                    '<td><strong>' + escHtml(a.name) + '</strong></td>' +
+                    '<td>' + escHtml(a.account_type || '-') + '</td>' +
+                    '<td>¥' + a.initial_balance.toFixed(2) + '</td>' +
+                    '<td style="font-weight:bold;color:' + colorStyle + '">¥' + a.current_balance.toFixed(2) + '</td>' +
+                    '<td>' + escHtml(a.remark || '-') + '</td>' +
+                    '<td><button class="btn-primary btn-sm" onclick="editAccount(' + a.id + ')">编辑</button> <button class="btn-danger btn-sm" onclick="deleteAccount(' + a.id + ')">删除</button></td>' +
+                    '</tr>';
             });
+            tbody.innerHTML = html;
+        }
+
+        function escHtml(s) {
+            var d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
         }
 
         document.getElementById('account-form').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData);
-            data.initial_balance = parseFloat(data.initial_balance) || 0;
+            var formData = new FormData(this);
+            var data = {};
+            data.name = formData.get('name');
+            data.account_type = formData.get('account_type');
+            data.initial_balance = parseFloat(formData.get('initial_balance')) || 0;
+            data.remark = formData.get('remark');
 
-            const id = document.getElementById('account-id').value;
-            
+            var id = document.getElementById('account-id').value;
             try {
                 if (id) {
-                    await fetch(`/api/accounts/${id}`, {
-                        method: 'PUT',
-                        credentials: 'include',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify(data)
-                    });
+                    await apiFetch('/accounts/' + id, {method: 'PUT', body: JSON.stringify(data)});
                     showToast('账户更新成功');
                 } else {
-                    await fetch('/api/accounts', {
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify(data)
-                    });
+                    await apiFetch('/accounts', {method: 'POST', body: JSON.stringify(data)});
                     showToast('账户添加成功');
                 }
                 resetForm();
                 loadAccounts();
             } catch (e) {
-                showToast('操作失败', 'error');
+                if (e.message !== 'SESSION_EXPIRED') showToast('操作失败: ' + e.message, 'error');
             }
         });
 
         function editAccount(id) {
-            const a = accounts.find(x => x.id === id);
+            var a = accounts.find(function(x) { return x.id === id; });
             if (!a) return;
-            
             document.getElementById('account-id').value = a.id;
             document.getElementById('account-name').value = a.name;
             document.getElementById('account-type').value = a.account_type || '银行账户';
@@ -258,7 +262,6 @@
             document.getElementById('account-remark').value = a.remark || '';
             document.getElementById('submit-btn').textContent = '更新账户';
             document.getElementById('form-title').textContent = '编辑账户';
-            
             document.getElementById('account-name').scrollIntoView({behavior: 'smooth'});
         }
 
@@ -273,62 +276,24 @@
         async function deleteAccount(id) {
             if (!confirm('确定删除该账户？删除后不可恢复。')) return;
             try {
-                const resp = await fetch(`/api/accounts/${id}`, {method: 'DELETE', credentials: 'include'});
-                const data = await resp.json();
-                if (resp.ok) {
-                    showToast('删除成功');
-                    loadAccounts();
-                } else {
-                    showToast(data.error || '删除失败', 'error');
-                }
-            } catch (e) {
-                showToast('删除失败', 'error');
-            }
-        }
-
-        async function recalculateBalances() {
-            if (!confirm('确定要重算所有账户余额？')) return;
-            try {
-                await fetch('/api/accounts/recalculate', {method: 'POST', credentials: 'include'});
-                showToast('余额重算完成');
+                var result = await apiFetch('/accounts/' + id, {method: 'DELETE'});
+                showToast('删除成功');
                 loadAccounts();
             } catch (e) {
-                showToast('重算失败', 'error');
-            }
+                if (e.message !== 'SESSION_EXPIRED') showToast('删除失败: ' + e.message, 'error');
+        }
         }
 
-        async function clearTransactions() {
-            if (!confirm('确定要清空所有交易记录？账户会保留，余额重置为期初值。此操作不可逆！')) return;
-            if (!confirm('再次确认：清空所有交易数据？')) return;
-            try {
-                await fetch('/api/clear-data', {method: 'POST', credentials: 'include'});
-                showToast('交易记录已清空');
-                loadAccounts();
-            } catch (e) {
-                showToast('操作失败', 'error');
-            }
-        }
-
-        async function clearAccounts() {
-            if (!confirm('确定要清空所有账户和交易数据？此操作不可逆！')) return;
-            if (!confirm('再次确认：删除所有账户和交易？')) return;
-            try {
-                await fetch('/api/clear-accounts', {method: 'POST', credentials: 'include'});
-                showToast('所有数据已清空');
-                loadAccounts();
-            } catch (e) {
-                showToast('操作失败', 'error');
-            }
-        }
-
-        function showToast(msg, type='success') {
-            const t = document.getElementById('toast');
+        function showToast(msg, type) {
+            type = type || 'success';
+            var t = document.getElementById('toast');
             t.textContent = msg;
             t.className = 'toast ' + type;
             t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 3000);
+            setTimeout(function() { t.classList.remove('show'); }, 3000);
         }
 
+        // 页面加载时自动获取账户列表
         document.addEventListener('DOMContentLoaded', loadAccounts);
     </script>
 </body>

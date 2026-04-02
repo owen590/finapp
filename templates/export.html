@@ -44,7 +44,7 @@
                                 <label>收支分类</label>
                                 <select id="type-filter">
                                     <option value="">全部</option>
-                                    <option value="入账">入账</option>
+                                    <option value="收入">收入</option>
                                     <option value="支出">支出</option>
                                 </select>
                             </div>
@@ -111,7 +111,7 @@
             const year = document.getElementById('year-filter').value;
             const month = document.getElementById('month-filter').value;
             
-            let url = '/api/export?';
+            let url = '/finapp/api/export?';
             const params = [];
             if (type) params.push(`type=${type}`);
             if (year) params.push(`year=${year}`);

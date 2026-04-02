@@ -22,7 +22,7 @@ async function loadStatistics() {
     const year = document.getElementById('year-filter')?.value || '';
     const month = document.getElementById('month-filter')?.value || '';
     
-    let url = '/api/statistics';
+    let url = '/finapp/api/statistics';
     const params = new URLSearchParams();
     if (year) params.append('year', year);
     if (month) params.append('month', month);
@@ -47,7 +47,7 @@ async function loadTransactions(page = 1) {
     const year = document.getElementById('year-filter')?.value || '';
     const month = document.getElementById('month-filter')?.value || '';
     
-    let url = `/api/transactions?page=${page}&per_page=${perPage}`;
+    let url = `/finapp/api/transactions?page=${page}&per_page=${perPage}`;
     if (type) url += `&type=${type}`;
     if (year) url += `&year=${year}`;
     if (month) url += `&month=${month}`;
@@ -86,7 +86,7 @@ async function loadTransactions(page = 1) {
 
 async function loadLoans() {
     try {
-        const response = await fetch('/api/loans', {credentials: "include"});;
+        const response = await fetch('/finapp/api/loans', {credentials: "include"});;
         const loans = await response.json();
         
         const tableBody = document.getElementById('loans-table');
@@ -133,7 +133,7 @@ async function loadLoans() {
 
 async function loadCapital() {
     try {
-        const response = await fetch('/api/capital', {credentials: "include"});;
+        const response = await fetch('/finapp/api/capital', {credentials: "include"});;
         const capitalList = await response.json();
         
         const tableBody = document.getElementById('capital-table');
@@ -180,7 +180,7 @@ function closeModal() {
 
 async function editCapital(id) {
     try {
-        const response = await fetch(`/api/capital/${id}`, {credentials: "include"});;
+        const response = await fetch(`/finapp/api/capital/${id}`, {credentials: "include"});;
         const capital = await response.json();
         
         document.getElementById('modal-title').textContent = '编辑资本投入';
@@ -198,7 +198,7 @@ async function editCapital(id) {
 async function deleteCapital(id) {
     if (confirm('确定要删除这条资本投入记录吗？')) {
         try {
-            const response = await fetch(`/api/capital/${id}`, {
+            const response = await fetch(`/finapp/api/capital/${id}`, {
                 method: 'DELETE'
             });
             const data = await response.json();
@@ -223,7 +223,7 @@ document.getElementById('capital-form')?.addEventListener('submit', async functi
     };
     
     try {
-        const url = id ? `/api/capital/${id}` : '/api/capital';
+        const url = id ? `/finapp/api/capital/${id}` : '/finapp/api/capital';
         const method = id ? 'PUT' : 'POST';
         
         const response = await fetch(url, {
@@ -252,7 +252,7 @@ async function loadMonthlyData() {
     const month = document.getElementById('month-select')?.value || '1';
     
     try {
-        const response = await fetch(`/api/statistics?year=${year}&month=${month}`, {credentials: "include"});;
+        const response = await fetch(`/finapp/api/statistics?year=${year}&month=${month}`, {credentials: "include"});;
         const data = await response.json();
         
         if (document.getElementById('monthly-income')) {
@@ -261,7 +261,7 @@ async function loadMonthlyData() {
             document.getElementById('monthly-balance').textContent = formatAmount(data.balance);
         }
         
-        const transactionsResponse = await fetch(`/api/transactions?year=${year}&month=${month}&per_page=1000`, {credentials: "include"});;
+        const transactionsResponse = await fetch(`/finapp/api/transactions?year=${year}&month=${month}&per_page=1000`, {credentials: "include"});;
         const transactionsData = await transactionsResponse.json();
         
         const expenseTable = document.getElementById('expense-table');
@@ -288,7 +288,7 @@ async function loadMonthlyData() {
         
         if (incomeTable) {
             incomeTable.innerHTML = '';
-            transactionsData.transactions.filter(t => t.type === '入账').forEach(t => {
+            transactionsData.transactions.filter(t => t.type === '收入').forEach(t => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${formatDate(t.date)}</td>
@@ -407,7 +407,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = Object.fromEntries(formData);
             
             try {
-                const response = await fetch('/api/transactions', {
+                const response = await fetch('/finapp/api/transactions', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -436,7 +436,7 @@ async function returnLoan(id) {
     if (!confirm('确认标记为已归还？')) return;
     
     try {
-        const response = await fetch(`/api/loans/${id}`, {
+        const response = await fetch(`/finapp/api/loans/${id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -460,7 +460,7 @@ async function deleteLoan(id) {
     if (!confirm('确认删除这条借款记录？')) return;
     
     try {
-        const response = await fetch(`/api/loans/${id}`, {
+        const response = await fetch(`/finapp/api/loans/${id}`, {
             method: 'DELETE'
         });
         
@@ -522,7 +522,7 @@ async function handleFileUpload(file) {
     formData.append('file', file);
     
     try {
-        const response = await fetch('/api/import', {
+        const response = await fetch('/finapp/api/import', {
             method: 'POST',
             body: formData
         });

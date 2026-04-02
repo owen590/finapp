@@ -19,6 +19,7 @@
             <nav>
                 <a href="{{ url_for('index') }}">首页</a>
                 <a href="{{ url_for('entry') }}" class="active">数据录入</a>
+                <a href="{{ url_for('accounts_page') }}">账户资产</a>
                 <a href="{{ url_for('reports') }}">报表</a>
                 <a href="{{ url_for('export') }}">数据导出</a>
                 {% if current_user.is_authenticated %}
@@ -52,8 +53,8 @@
                                     <label>收支 <span class="required">*</span></label>
                                     <select name="type" id="type-select" required onchange="updateCategoryByType()">
                                         <option value="">请选择</option>
-                                        <option value="入账">入账</option>
-                                        <option value="出账">出账</option>
+                                        <option value="收入">收入</option>
+                                        <option value="支出">支出</option>
                                     </select>
                                 </div>
                             </div>
@@ -80,7 +81,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label>账户</label>
-                                    <select name="account_id" id="account-select" onchange="loadAccounts()">
+                                    <select name="account_id" id="account-select">
                                         <option value="">请选择账户</option>
                                     </select>
                                 </div>
@@ -140,14 +141,14 @@
                     <div class="entry-card">
                         <h2>批量录入交易</h2>
                         <p class="hint">每行输入一条记录，格式：日期\t收支分类\t明细分类\t摘要\t金额\t备注（支持制表符、竖线或逗号分隔）</p>
-                        <p class="hint example">示例：2025-03-15\t出账\t电费\t三月电费\t2066\t备注信息</p>
+                        <p class="hint example">示例：2025-03-15\t支出\t电费\t三月电费\t2066\t备注信息</p>
                         <p class="hint example">示例：2025/03/15|收入|货款|客户付款|5000|备注信息</p>
-                        <p class="hint example">示例：2025-03-15,出账,电费,三月电费,2066,备注信息</p>
+                        <p class="hint example">示例：2025-03-15,支出,电费,三月电费,2066,备注信息</p>
                         
                         <form id="batch-form" class="entry-form">
                             <div class="form-group full-width">
                                 <label>批量数据 <span class="required">*</span></label>
-                                <textarea name="batch-data" rows="15" placeholder="2025-03-15|出账|电费|三月电费|2066|备注信息&#10;2025-03-16|收入|货款|客户付款|5000|备注信息&#10;2025-03-17|出账|材料|采购材料|10000|备注信息"></textarea>
+                                <textarea name="batch-data" rows="15" placeholder="2025-03-15|支出|电费|三月电费|2066|备注信息&#10;2025-03-16|收入|货款|客户付款|5000|备注信息&#10;2025-03-17|支出|材料|采购材料|10000|备注信息"></textarea>
                             </div>
 
                             <div class="batch-preview" id="batch-preview" style="display: none;">
@@ -205,8 +206,8 @@
                             <label>收支 <span class="required">*</span></label>
                             <select name="type" id="edit-type-select" required onchange="updateEditCategoryByType()">
                                 <option value="">请选择</option>
-                                <option value="入账">入账</option>
-                                <option value="出账">出账</option>
+                                <option value="收入">收入</option>
+                                <option value="支出">支出</option>
                             </select>
                         </div>
                     </div>
@@ -264,13 +265,8 @@
         </footer>
     </div>
 
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/entry.js') }}"></script>
-    <script>
-        window.onload = function() {
-            console.log('Window loaded, initializing entry page');
-            initEntryPage();
-        };
-    </script>
+    <script src="{{ url_for('static', filename='js/app.js') }}?v=8"></script>
+    <script src="{{ url_for('static', filename='js/entry.js') }}?v=8"></script>
+
 </body>
 </html>

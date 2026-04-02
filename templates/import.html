@@ -37,7 +37,7 @@
                         <form id="import-form" class="entry-form">
                             <div class="form-group full-width">
                                 <label>导入数据 <span class="required">*</span></label>
-                                <textarea name="import-data" rows="15" placeholder="日期,收支分类,明细分类,摘要,金额,备注&#10;2025-03-15,支出,电费,三月电费,2066,备注信息&#10;2025-03-16,入账,货款,客户付款,5000,备注信息"></textarea>
+                                <textarea name="import-data" rows="15" placeholder="日期,收支分类,明细分类,摘要,金额,备注&#10;2025-03-15,支出,电费,三月电费,2066,备注信息&#10;2025-03-16,收入,货款,客户付款,5000,备注信息"></textarea>
                             </div>
                             <div class="form-actions">
                                 <button type="button" class="btn-secondary" onclick="previewImport()">预览</button>
@@ -54,7 +54,7 @@
                         <li>支持CSV格式（逗号分隔）或制表符分隔的数据</li>
                         <li>数据格式：日期,收支分类,明细分类,金额,摘要,备注</li>
                         <li>日期格式支持：2025-03-15 或 2025/03/15</li>
-                        <li>收支分类：入账/支出</li>
+                        <li>收支分类：收入/支出</li>
                         <li>导入的数据将添加到现有数据库中，不会覆盖已有数据</li>
                     </ul>
                 </div>
@@ -160,10 +160,10 @@
                     }
                     
                     // 转换收支分类：保持原分类不变
-                    if (type === '出账') {
-                        type = '出账';
-                    } else if (type === '入账') {
-                        type = '入账';
+                    if (type === '支出') {
+                        type = '支出';
+                    } else if (type === '收入') {
+                        type = '收入';
                     }
                     
                     // 处理金额格式，移除所有逗号
@@ -266,10 +266,10 @@
                     }
                     
                     // 转换收支分类：保持原分类不变
-                    if (type === '出账') {
-                        type = '出账';
-                    } else if (type === '入账') {
-                        type = '入账';
+                    if (type === '支出') {
+                        type = '支出';
+                    } else if (type === '收入') {
+                        type = '收入';
                     }
                     
                     // 处理金额格式，移除所有逗号
