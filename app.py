@@ -1017,7 +1017,7 @@ def export_pdf():
         title_style = ParagraphStyle(
             'CustomTitle',
             parent=styles['Heading1'],
-            fontSize=16,
+            fontSize=24,
             spaceAfter=20,
             fontName=chinese_font
         )
@@ -1239,7 +1239,7 @@ def export_pdf():
                         Paragraph(str(month_data.get('transaction_count', 0)), right_style)
                     ])
                 
-                monthly_table = Table(monthly_table_data, colWidths=[2*cm, 2.5*cm, 2.5*cm, 2.5*cm, 1.5*cm])
+                monthly_table = Table(monthly_table_data, colWidths=[2.3*cm, 2.3*cm, 2.3*cm, 2.5*cm, 2.1*cm])
                 monthly_table.setStyle(TableStyle([
                     ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
                     ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
@@ -1256,10 +1256,10 @@ def export_pdf():
             if report_type == 'daily' or report_type == 'monthly':
                 # 日报表和月报表：使用新的7列结构
                 # 调整列宽，确保能显示百万位数字，摘要和明细分类有足够宽度
-                col_widths = [1.5*cm, 1.5*cm, 2.5*cm, 4*cm, 3*cm, 3*cm, 3*cm]
+                col_widths = [1.5*cm, 1.5*cm, 3.6*cm, 5.1*cm, 2.3*cm, 2.3*cm, 2.3*cm]
             else:
                 # 年度报表：调整列宽，确保对齐
-                col_widths = [2.5*cm, 3*cm, 3*cm, 3*cm, 2.5*cm]
+                col_widths = [4.1*cm, 2.3*cm, 2.3*cm, 2.3*cm, 2.5*cm]
             
             table = Table(table_data, colWidths=col_widths)
             
