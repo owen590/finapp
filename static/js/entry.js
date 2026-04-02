@@ -56,15 +56,40 @@ async function loadAccountsForSelect() {
     try {
         const resp = await fetch("/finapp/api/accounts", {credentials: "include"});
         const accounts = await resp.json();
+        
+        // 交易录入下拉
         const select = document.getElementById('account-select');
-        if (!select) return;
-        select.innerHTML = '<option value="">请选择账户</option>';
-        accounts.forEach(a => {
-            const opt = document.createElement('option');
-            opt.value = a.id;
-            opt.textContent = `${a.name}（余额: ¥${a.current_balance.toFixed(2)}）`;
-            select.appendChild(opt);
-        });
+        if (select) {
+            select.innerHTML = '<option value="">请选择账户</option>';
+            accounts.forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a.id;
+                opt.textContent = a.name + '（余额: ¥' + a.current_balance.toFixed(2) + '）';
+                select.appendChild(opt);
+            });
+        }
+        
+        // 转账表单下拉
+        const fromSelect = document.getElementById('from-account');
+        const toSelect = document.getElementById('to-account');
+        if (fromSelect) {
+            fromSelect.innerHTML = '<option value="">请选择账户</option>';
+            accounts.forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a.id;
+                opt.textContent = a.name + '（余额: ¥' + a.current_balance.toFixed(2) + '）';
+                fromSelect.appendChild(opt);
+            });
+        }
+        if (toSelect) {
+            toSelect.innerHTML = '<option value="">请选择账户</option>';
+            accounts.forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a.id;
+                opt.textContent = a.name + '（余额: ¥' + a.current_balance.toFixed(2) + '）';
+                toSelect.appendChild(opt);
+            });
+        }
     } catch (e) {
         console.error('加载账户失败', e);
     }
