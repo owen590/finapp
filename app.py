@@ -288,16 +288,7 @@ def create_transaction():
     
     db.session.add(transaction)
     db.session.flush()
-    
-    # 更新账户余额
-    if transaction.account_id:
-        account = Account.query.get(transaction.account_id)
-        if account:
-            if transaction.type == '收入':
-                account.current_balance += transaction.amount
-            else:
-                account.current_balance -= transaction.amount
-    
+    account.recalculate_balance()
     db.session.commit()
     
     # 同步到飞书
@@ -370,19 +361,13 @@ def update_transaction(id):
     if old_account_id:
         old_account = Account.query.get(old_account_id)
         if old_account:
-            if old_type == '收入':
-                old_account.current_balance -= old_amount
-            else:
-                old_account.current_balance += old_amount
+            pass  # Balance auto-calculated
     
     # 2. 应用新账户的余额变动
     if transaction.account_id:
         new_account = Account.query.get(transaction.account_id)
         if new_account:
-            if transaction.type == '收入':
-                new_account.current_balance += transaction.amount
-            else:
-                new_account.current_balance -= transaction.amount
+            pass  # Balance auto-calculated
     
     db.session.commit()
     
@@ -417,14 +402,14 @@ def delete_transaction(id):
     transaction = Transaction.query.get_or_404(id)
     
     # 更新账户余额
-    if transaction.account_id:
-        account = Account.query.get(transaction.account_id)
-        if account:
-            if transaction.type == '收入':
-                account.current_balance -= transaction.amount
-            else:
-                account.current_balance += transaction.amount
+    # Balance auto-calculated
     
+    # 自动重新计算账户余额
+    if old_account_id:
+        old_account.recalculate_balance()
+    if transaction.account_id:
+        new_account.recalculate_balance()
+
     # 删除飞书记录
     if transaction.bitable_record_id:
         try:
@@ -435,6 +420,8 @@ def delete_transaction(id):
     db.session.delete(transaction)
     db.session.commit()
     
+    account.recalculate_balance()
+    db.session.commit()
     return jsonify({'message': '删除成功'})
 
 @app.route('/finapp/api/transfer', methods=['POST'])
@@ -462,13 +449,12 @@ def api_transfer():
         return jsonify({'message': '账户不存在'}), 404
     
     # 检查余额是否充足
-    if from_account.current_balance < amount:
-        return jsonify({'message': f'余额不足，当前余额 ¥{from_account.current_balance:.2f}'}), 400
+    if Account.query.get(from_account.id).to_dict()['current_balance'] < amount:
+        return jsonify({'message': "余额不足，当前余额 ¥{Account.query.get(from_account.id).to_dict()['current_balance']:.2f}"}), 400
     
-    # 执行转账：转出减，转入加
-    from_account.current_balance -= amount
-    to_account.current_balance += amount
-    
+    # 执行转账：转出减，转入加（直接改current_balance，因为转账不记交易）
+    from_account.recalculate_balance()
+    to_account.recalculate_balance()
     db.session.commit()
     
     return jsonify({
@@ -476,8 +462,8 @@ def api_transfer():
         'from_account': from_account.name,
         'to_account': to_account.name,
         'amount': amount,
-        'from_balance': from_account.current_balance,
-        'to_balance': to_account.current_balance
+        'from_balance': Account.query.get(from_account.id).to_dict()['current_balance'],
+        'to_balance': Account.query.get(to_account.id).to_dict()['current_balance']
     })
 
 
@@ -552,6 +538,8 @@ def delete_loan(id):
     db.session.delete(loan)
     db.session.commit()
     
+    account.recalculate_balance()
+    db.session.commit()
     return jsonify({'message': '删除成功'})
 
 @app.route('/finapp/api/capital', methods=['GET'])
@@ -605,6 +593,8 @@ def delete_capital(id):
     db.session.delete(capital)
     db.session.commit()
     
+    account.recalculate_balance()
+    db.session.commit()
     return jsonify({'message': '删除成功'})
 
 @app.route('/finapp/api/statistics', methods=['GET'])
@@ -657,7 +647,7 @@ def create_account():
         name=data['name'],
         account_type=data.get('account_type', ''),
         initial_balance=float(data.get('initial_balance', 0)),
-        current_balance=float(data.get('initial_balance', 0)),
+        current_balance=0,
         remark=data.get('remark', '')
     )
     
@@ -694,10 +684,8 @@ def update_account(id):
     if 'remark' in data:
         account.remark = data['remark']
     if 'initial_balance' in data:
-        # 调整初始余额变化对当前余额的影响
-        diff = float(data['initial_balance']) - account.initial_balance
         account.initial_balance = float(data['initial_balance'])
-        account.current_balance += diff
+        account.recalculate_balance()
     
     db.session.commit()
     return jsonify(account.to_dict())
@@ -713,6 +701,8 @@ def delete_account(id):
     
     db.session.delete(account)
     db.session.commit()
+    account.recalculate_balance()
+    db.session.commit()
     return jsonify({'message': '删除成功'})
 
 @app.route('/finapp/api/accounts/recalculate', methods=['POST'])
@@ -726,8 +716,7 @@ def recalculate_account_balances():
                 balance += t.amount
             else:
                 balance -= t.amount
-        account.current_balance = balance
-    db.session.commit()
+            db.session.commit()
     return jsonify({'message': '余额重算完成'})
 
 # ----------- 数据管理 API -----------
@@ -742,9 +731,7 @@ def clear_all_data():
     db.session.commit()
     
     # 重置账户余额为初始值
-    for account in Account.query.all():
-        account.current_balance = account.initial_balance
-    db.session.commit()
+    for account in Account.query.all():    db.session.commit()
     
     return jsonify({'message': '所有交易数据已清空，账户余额已重置'})
 

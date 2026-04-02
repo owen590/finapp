@@ -27,6 +27,16 @@ class Account(db.Model):
             'created_at': (self.created_at or datetime.now()).strftime('%Y-%m-%d %H:%M:%S')
         }
 
+    def recalculate_balance(self):
+        """从交易记录重新计算余额并保存"""
+        income = db.session.query(db.func.sum(Transaction.amount)).filter(
+            Transaction.account_id == self.id, Transaction.type == '收入'
+        ).scalar() or 0
+        expense = db.session.query(db.func.sum(Transaction.amount)).filter(
+            Transaction.account_id == self.id, Transaction.type == '支出'
+        ).scalar() or 0
+        self.current_balance = round(self.initial_balance + income - expense, 2)
+
 class Transaction(db.Model):
     __tablename__ = 'transactions'
     
