@@ -11,13 +11,13 @@
         <header>
             <h1>财务系统</h1>
             <nav>
-                <a href="/">首页</a>
-                <a href="/ledger">总账</a>
-                <a href="/monthly">月度账单</a>
-                <a href="/loans">借款管理</a>
-                <a href="/entry">数据录入</a>
-                <a href="/accounts">账户资产</a>
-                <a href="/import" class="active">数据导入</a>
+                <a href="{{ url_for('index') }}">首页</a>
+                <a href="{{ url_for('ledger') }}">总账</a>
+                <a href="{{ url_for('monthly') }}">月度账单</a>
+                <a href="{{ url_for('loans_page') }}">借款管理</a>
+                <a href="{{ url_for('entry') }}">数据录入</a>
+                <a href="{{ url_for('accounts_page') }}">账户资产</a>
+                <a href="{{ url_for('import_page') }}" class="active">数据导入</a>
             </nav>
         </header>
 
