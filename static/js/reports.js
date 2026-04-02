@@ -1,5 +1,12 @@
 // 报表页面功能
 
+// 全局劫持fetch，自动带上credentials
+const _origFetch = window.fetch;
+window.fetch = function(input, init = {}) {
+    init.credentials = 'include';
+    return _origFetch(input, init);
+};
+
 let currentReportType = 'daily';
 let currentReportData = null;
 
@@ -146,7 +153,7 @@ async function generateReport() {
     showLoading(true);
     
     try {
-        const response = await fetch(url);
+        const response = await fetch(url, {credentials: "include"});;
         const data = await response.json();
         
         if (response.ok) {

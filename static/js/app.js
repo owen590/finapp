@@ -1,3 +1,10 @@
+// 全局劫持fetch，自动带上credentials
+const _origFetch = window.fetch;
+window.fetch = function(input, init = {}) {
+    init.credentials = 'include';
+    return _origFetch(input, init);
+};
+
 let currentPage = 1;
 const perPage = 20;
 
@@ -22,7 +29,7 @@ async function loadStatistics() {
     if (params.toString()) url += '?' + params.toString();
     
     try {
-        const response = await fetch(url);
+        const response = await fetch(url, {credentials: "include"});;
         const data = await response.json();
         
         if (document.getElementById('total-income')) {
@@ -46,7 +53,7 @@ async function loadTransactions(page = 1) {
     if (month) url += `&month=${month}`;
     
     try {
-        const response = await fetch(url);
+        const response = await fetch(url, {credentials: "include"});;
         const data = await response.json();
         
         const tableBody = document.getElementById('transactions-table');
@@ -79,7 +86,7 @@ async function loadTransactions(page = 1) {
 
 async function loadLoans() {
     try {
-        const response = await fetch('/api/loans');
+        const response = await fetch('/api/loans', {credentials: "include"});;
         const loans = await response.json();
         
         const tableBody = document.getElementById('loans-table');
@@ -126,7 +133,7 @@ async function loadLoans() {
 
 async function loadCapital() {
     try {
-        const response = await fetch('/api/capital');
+        const response = await fetch('/api/capital', {credentials: "include"});;
         const capitalList = await response.json();
         
         const tableBody = document.getElementById('capital-table');
@@ -173,7 +180,7 @@ function closeModal() {
 
 async function editCapital(id) {
     try {
-        const response = await fetch(`/api/capital/${id}`);
+        const response = await fetch(`/api/capital/${id}`, {credentials: "include"});;
         const capital = await response.json();
         
         document.getElementById('modal-title').textContent = '编辑资本投入';
@@ -245,7 +252,7 @@ async function loadMonthlyData() {
     const month = document.getElementById('month-select')?.value || '1';
     
     try {
-        const response = await fetch(`/api/statistics?year=${year}&month=${month}`);
+        const response = await fetch(`/api/statistics?year=${year}&month=${month}`, {credentials: "include"});;
         const data = await response.json();
         
         if (document.getElementById('monthly-income')) {
@@ -254,7 +261,7 @@ async function loadMonthlyData() {
             document.getElementById('monthly-balance').textContent = formatAmount(data.balance);
         }
         
-        const transactionsResponse = await fetch(`/api/transactions?year=${year}&month=${month}&per_page=1000`);
+        const transactionsResponse = await fetch(`/api/transactions?year=${year}&month=${month}&per_page=1000`, {credentials: "include"});;
         const transactionsData = await transactionsResponse.json();
         
         const expenseTable = document.getElementById('expense-table');

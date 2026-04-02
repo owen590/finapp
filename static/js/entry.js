@@ -1,5 +1,12 @@
 // 数据录入页面专用JavaScript
 
+// 全局劫持fetch，自动带上credentials
+const _origFetch = window.fetch;
+window.fetch = function(input, init = {}) {
+    init.credentials = 'include';
+    return _origFetch(input, init);
+};
+
 let currentTab = 'transaction';
 let recentTransactions = [];
 let recentLoans = [];
@@ -47,7 +54,7 @@ function initEntryPage() {
 
 async function loadAccountsForSelect() {
     try {
-        const resp = await fetch('/api/accounts');
+        const resp = await fetch('/api/accounts', {credentials: "include"});;
         const accounts = await resp.json();
         const select = document.getElementById('account-select');
         if (!select) return;
@@ -252,7 +259,7 @@ async function handleLoanSubmit(e) {
 
 async function loadRecentTransactions() {
     try {
-        const response = await fetch('/api/transactions?page=1&per_page=5');
+        const response = await fetch('/api/transactions?page=1&per_page=5', {credentials: "include"});;
         const data = await response.json();
         recentTransactions = data.transactions || [];
         renderRecentTransactions();
@@ -288,7 +295,7 @@ function renderRecentTransactions() {
 
 async function loadRecentLoans() {
     try {
-        const response = await fetch('/api/loans');
+        const response = await fetch('/api/loans', {credentials: "include"});;
         const loans = await response.json();
         recentLoans = (loans || []).slice(0, 5);
         renderRecentLoans();
@@ -319,7 +326,7 @@ function renderRecentLoans() {
 
 async function editTransaction(id) {
     try {
-        const response = await fetch(`/api/transactions/${id}`);
+        const response = await fetch(`/api/transactions/${id}`, {credentials: "include"});;
         if (response.ok) {
             const transaction = await response.json();
             openEditModal(transaction);
@@ -359,7 +366,7 @@ function openEditModal(transaction) {
 
 async function loadAccountsForEditSelect(selectedId) {
     try {
-        const resp = await fetch('/api/accounts');
+        const resp = await fetch('/api/accounts', {credentials: "include"});;
         const accounts = await resp.json();
         const select = document.getElementById('edit-account-select');
         if (!select) return;
@@ -420,7 +427,7 @@ async function handleEditSubmit(e) {
 async function deleteTransaction(id) {
     if (!confirm('确定要删除这条交易记录吗？')) return;
     try {
-        const response = await fetch(`/api/transactions/${id}`, {method: 'DELETE'});
+        const response = await fetch(`/api/transactions/${id}`, {"credentials":"include", "method: 'DELETE'});
         if (response.ok) {
             showToast('删除成功！');
             loadRecentTransactions();
@@ -450,7 +457,7 @@ async function returnLoan(id) {
 async function deleteLoan(id) {
     if (!confirm('确定删除？')) return;
     try {
-        await fetch(`/api/loans/${id}`, {method: 'DELETE'});
+        await fetch(`/api/loans/${id}`, {"credentials":"include", "method: 'DELETE'});
         showToast('删除成功');
         loadRecentLoans();
     } catch (error) {
@@ -544,7 +551,7 @@ async function handleBatchSubmit(e) {
     
     for (const t of transactions) {
         try {
-            const resp = await fetch('/api/transactions', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(t)});
+            const resp = await fetch('/api/transactions', {"credentials":"include", "method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(t)});
             if (resp.ok) successCount++; else errorCount++;
         } catch { errorCount++; }
         await new Promise(r => setTimeout(r, 30));
