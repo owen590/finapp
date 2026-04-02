@@ -153,7 +153,7 @@
 
         async function loadAccounts() {
             try {
-                const resp = await fetch('/api/accounts');
+                const resp = await fetch('/api/accounts', {credentials: 'include'});
                 accounts = await resp.json();
                 renderAccounts();
                 renderOverview();
@@ -226,6 +226,7 @@
                 if (id) {
                     await fetch(`/api/accounts/${id}`, {
                         method: 'PUT',
+                        credentials: 'include',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify(data)
                     });
@@ -233,6 +234,7 @@
                 } else {
                     await fetch('/api/accounts', {
                         method: 'POST',
+                        credentials: 'include',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify(data)
                     });
@@ -271,7 +273,7 @@
         async function deleteAccount(id) {
             if (!confirm('确定删除该账户？删除后不可恢复。')) return;
             try {
-                const resp = await fetch(`/api/accounts/${id}`, {method: 'DELETE'});
+                const resp = await fetch(`/api/accounts/${id}`, {method: 'DELETE', credentials: 'include'});
                 const data = await resp.json();
                 if (resp.ok) {
                     showToast('删除成功');
@@ -287,7 +289,7 @@
         async function recalculateBalances() {
             if (!confirm('确定要重算所有账户余额？')) return;
             try {
-                await fetch('/api/accounts/recalculate', {method: 'POST'});
+                await fetch('/api/accounts/recalculate', {method: 'POST', credentials: 'include'});
                 showToast('余额重算完成');
                 loadAccounts();
             } catch (e) {
@@ -299,7 +301,7 @@
             if (!confirm('确定要清空所有交易记录？账户会保留，余额重置为期初值。此操作不可逆！')) return;
             if (!confirm('再次确认：清空所有交易数据？')) return;
             try {
-                await fetch('/api/clear-data', {method: 'POST'});
+                await fetch('/api/clear-data', {method: 'POST', credentials: 'include'});
                 showToast('交易记录已清空');
                 loadAccounts();
             } catch (e) {
@@ -311,7 +313,7 @@
             if (!confirm('确定要清空所有账户和交易数据？此操作不可逆！')) return;
             if (!confirm('再次确认：删除所有账户和交易？')) return;
             try {
-                await fetch('/api/clear-accounts', {method: 'POST'});
+                await fetch('/api/clear-accounts', {method: 'POST', credentials: 'include'});
                 showToast('所有数据已清空');
                 loadAccounts();
             } catch (e) {
