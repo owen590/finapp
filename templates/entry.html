@@ -49,8 +49,8 @@
                                     <input type="date" name="date" required>
                                 </div>
                                 <div class="form-group">
-                                    <label>收支分类 <span class="required">*</span></label>
-                                    <select name="type" required>
+                                    <label>收支 <span class="required">*</span></label>
+                                    <select name="type" id="type-select" required onchange="updateCategoryByType()">
                                         <option value="">请选择</option>
                                         <option value="入账">入账</option>
                                         <option value="出账">出账</option>
@@ -60,24 +60,15 @@
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>大类 <span class="required">*</span></label>
+                                    <label>分类 <span class="required">*</span></label>
                                     <select name="category" id="category-select" required onchange="updateSubCategories()">
-                                        <option value="">请选择大类</option>
-                                        <option value="购物消费">购物消费</option>
-                                        <option value="食品餐饮">食品餐饮</option>
-                                        <option value="出行交通">出行交通</option>
-                                        <option value="休闲娱乐">休闲娱乐</option>
-                                        <option value="居家生活">居家生活</option>
-                                        <option value="文化教育">文化教育</option>
-                                        <option value="送礼人情">送礼人情</option>
-                                        <option value="健康医疗">健康医疗</option>
-                                        <option value="其他">其他</option>
+                                        <option value="">请先选择收支</option>
                                     </select>
                                 </div>
-                                <div class="form-group">
-                                    <label>明细 <span class="required">*</span></label>
-                                    <select name="sub_category" id="sub-category-select" required>
-                                        <option value="">请先选择大类</option>
+                                <div class="form-group" id="sub-category-group">
+                                    <label>明细</label>
+                                    <select name="sub_category" id="sub-category-select">
+                                        <option value="">请选择明细</option>
                                     </select>
                                 </div>
                             </div>
@@ -211,8 +202,8 @@
                             <input type="date" name="date" required>
                         </div>
                         <div class="form-group">
-                            <label>类型 <span class="required">*</span></label>
-                            <select name="type" required>
+                            <label>收支 <span class="required">*</span></label>
+                            <select name="type" id="edit-type-select" required onchange="updateEditCategoryByType()">
                                 <option value="">请选择</option>
                                 <option value="入账">入账</option>
                                 <option value="出账">出账</option>
@@ -221,24 +212,15 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>大类 <span class="required">*</span></label>
+                            <label>分类 <span class="required">*</span></label>
                             <select name="category" id="edit-category-select" required onchange="updateEditSubCategories()">
-                                <option value="">请选择大类</option>
-                                <option value="购物消费">购物消费</option>
-                                <option value="食品餐饮">食品餐饮</option>
-                                <option value="出行交通">出行交通</option>
-                                <option value="休闲娱乐">休闲娱乐</option>
-                                <option value="居家生活">居家生活</option>
-                                <option value="文化教育">文化教育</option>
-                                <option value="送礼人情">送礼人情</option>
-                                <option value="健康医疗">健康医疗</option>
-                                <option value="其他">其他</option>
+                                <option value="">请先选择收支</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label>明细 <span class="required">*</span></label>
-                            <select name="sub_category" id="edit-sub-category-select" required>
-                                <option value="">请先选择大类</option>
+                        <div class="form-group" id="edit-sub-category-group">
+                            <label>明细</label>
+                            <select name="sub_category" id="edit-sub-category-select">
+                                <option value="">请选择明细</option>
                             </select>
                         </div>
                     </div>

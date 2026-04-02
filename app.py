@@ -1263,4 +1263,11 @@ if __name__ == '__main__':
             db.session.add(admin)
             db.session.commit()
             print('默认管理员用户已创建: username=admin, password=admin123')
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    import os
+    port = int(os.environ.get('PORT', 5000))
+    script_name = os.environ.get('SCRIPT_NAME', '/finapp')
+    
+    from werkzeug.middleware.dispatcher import DispatcherMiddleware
+    app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {script_name: app})
+    
+    app.run(debug=True, host='0.0.0.0', port=port)

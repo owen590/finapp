@@ -17,6 +17,9 @@ const CATEGORIES = {
     "其他": ["罚款赔偿", "理财支出", "慈善捐助"]
 };
 
+// 收入分类（单层，无明细）
+const INCOME_CATEGORIES = ["工资", "奖金", "兼职外快", "补贴", "报销", "二手闲置", "理财盈利", "礼金人情", "中奖", "借入"];
+
 function initEntryPage() {
     try {
         const today = new Date().toISOString().split('T')[0];
@@ -63,28 +66,70 @@ async function loadAccountsForSelect() {
 function updateSubCategories() {
     const category = document.getElementById('category-select').value;
     const subSelect = document.getElementById('sub-category-select');
+    const subGroup = document.getElementById('sub-category-group');
     if (!subSelect) return;
-    if (!category || !CATEGORIES[category]) {
-        subSelect.innerHTML = '<option value="">请先选择大类</option>';
+    
+    // 入账无明细
+    if (!category || category === '入账') {
+        if (subGroup) subGroup.style.display = 'none';
         return;
     }
-    subSelect.innerHTML = '<option value="">请选择明细</option>';
-    CATEGORIES[category].forEach(sub => {
-        const opt = document.createElement('option');
-        opt.value = sub;
-        opt.textContent = sub;
-        subSelect.appendChild(opt);
-    });
+    
+    // 出账显示两级联动
+    if (CATEGORIES[category]) {
+        if (subGroup) subGroup.style.display = '';
+        subSelect.innerHTML = '<option value="">请选择明细</option>';
+        CATEGORIES[category].forEach(sub => {
+            const opt = document.createElement('option');
+            opt.value = sub;
+            opt.textContent = sub;
+            subSelect.appendChild(opt);
+        });
+    } else {
+        if (subGroup) subGroup.style.display = 'none';
+    }
+}
+
+function updateCategoryByType() {
+    const type = document.getElementById('type-select').value;
+    const catSelect = document.getElementById('category-select');
+    const subSelect = document.getElementById('sub-category-select');
+    const subGroup = document.getElementById('sub-category-group');
+    if (!catSelect) return;
+    
+    catSelect.innerHTML = '<option value="">请选择分类</option>';
+    if (subSelect) subSelect.innerHTML = '<option value="">请选择明细</option>';
+    if (subGroup) subGroup.style.display = 'none';
+    
+    if (type === '入账') {
+        INCOME_CATEGORIES.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            catSelect.appendChild(opt);
+        });
+    } else if (type === '出账') {
+        Object.keys(CATEGORIES).forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            catSelect.appendChild(opt);
+        });
+    }
 }
 
 function updateEditSubCategories(selectedSub) {
     const category = document.getElementById('edit-category-select').value;
     const subSelect = document.getElementById('edit-sub-category-select');
+    const subGroup = document.getElementById('edit-sub-category-group');
     if (!subSelect) return;
-    if (!category || !CATEGORIES[category]) {
-        subSelect.innerHTML = '<option value="">请先选择大类</option>';
+    
+    if (!category || category === '入账' || !CATEGORIES[category]) {
+        if (subGroup) subGroup.style.display = 'none';
         return;
     }
+    
+    if (subGroup) subGroup.style.display = '';
     subSelect.innerHTML = '<option value="">请选择明细</option>';
     CATEGORIES[category].forEach(sub => {
         const opt = document.createElement('option');
@@ -93,6 +138,34 @@ function updateEditSubCategories(selectedSub) {
         if (sub === selectedSub) opt.selected = true;
         subSelect.appendChild(opt);
     });
+}
+
+function updateEditCategoryByType() {
+    const type = document.getElementById('edit-type-select').value;
+    const catSelect = document.getElementById('edit-category-select');
+    const subSelect = document.getElementById('edit-sub-category-select');
+    const subGroup = document.getElementById('edit-sub-category-group');
+    if (!catSelect) return;
+    
+    catSelect.innerHTML = '<option value="">请选择分类</option>';
+    if (subSelect) subSelect.innerHTML = '<option value="">请选择明细</option>';
+    if (subGroup) subGroup.style.display = 'none';
+    
+    if (type === '入账') {
+        INCOME_CATEGORIES.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            catSelect.appendChild(opt);
+        });
+    } else if (type === '出账') {
+        Object.keys(CATEGORIES).forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            catSelect.appendChild(opt);
+        });
+    }
 }
 
 function switchTab(tab) {
@@ -122,8 +195,12 @@ async function handleTransactionSubmit(e) {
     
     if (data.account_id) data.account_id = parseInt(data.account_id);
     
-    if (!data.category || !data.sub_category) {
-        showToast('请选择大类和明细', 'error');
+    if (!data.category) {
+        showToast('请选择分类', 'error');
+        return;
+    }
+    if (data.type === '出账' && !data.sub_category) {
+        showToast('请选择明细', 'error');
         return;
     }
     
@@ -260,11 +337,18 @@ function openEditModal(transaction) {
     document.querySelector('#edit-form textarea[name="description"]').value = transaction.description || '';
     document.querySelector('#edit-form textarea[name="remark"]').value = transaction.remark || '';
     
-    // 设置两级分类
-    const catSelect = document.getElementById('edit-category-select');
-    if (catSelect) {
-        catSelect.value = transaction.category || '';
-        updateEditSubCategories(transaction.sub_category || '');
+    // 设置两级分类：先填type触发updateEditCategoryByType，再设category和sub_category
+    const typeSelect = document.getElementById('edit-type-select');
+    if (typeSelect) {
+        typeSelect.value = transaction.type || '';
+        updateEditCategoryByType();
+        const catSelect = document.getElementById('edit-category-select');
+        if (catSelect) {
+            catSelect.value = transaction.category || '';
+            if (transaction.type === '出账') {
+                updateEditSubCategories(transaction.sub_category || '');
+            }
+        }
     }
     
     // 设置账户
@@ -306,8 +390,12 @@ async function handleEditSubmit(e) {
     if (data.account_id) data.account_id = parseInt(data.account_id);
     else delete data.account_id;
     
-    if (!data.category || !data.sub_category) {
-        showToast('请选择大类和明细', 'error');
+    if (!data.category) {
+        showToast('请选择分类', 'error');
+        return;
+    }
+    if (data.type === '出账' && !data.sub_category) {
+        showToast('请选择明细', 'error');
         return;
     }
     
