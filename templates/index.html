@@ -195,7 +195,7 @@
         
         async function loadRecentTransactions() {
             try {
-                const response = await fetch('/api/transactions?per_page=50');
+                const response = await fetch('/finapp/api/transactions?per_page=50');
                 const data = await response.json();
                 
                 const tableBody = document.getElementById('transactions-table');
@@ -248,8 +248,9 @@
         async function confirmDelete(id) {
             if (confirm('确定要删除这条记录吗？')) {
                 try {
-                    const response = await fetch('/api/transactions/' + id, {
-                        method: 'DELETE'
+                    const response = await fetch('/finapp/api/transactions/' + id, {
+                        method: 'DELETE',
+                        credentials: 'include'
                     });
                     if (response.ok) {
                         alert('删除成功');
@@ -265,7 +266,7 @@
             }
         }
         
-        async function loadSummaryData(url = '/api/statistics') {
+        async function loadSummaryData(url = '/finapp/api/statistics') {
             try {
                 const response = await fetch(url);
                 const data = await response.json();
@@ -294,8 +295,8 @@
             // 保存筛选条件
             saveFilter();
             
-            let url = '/api/transactions?per_page=50&page=1';
-            let statsUrl = '/api/statistics';
+            let url = '/finapp/api/transactions?per_page=50&page=1';
+            let statsUrl = '/finapp/api/statistics';
             
             if (startDate) {
                 url += '&start_date=' + startDate;
@@ -439,7 +440,7 @@
             const month = document.getElementById('month-filter').value;
             const type = document.getElementById('type-filter').value;
             
-            let url = `/api/transactions?per_page=50&page=${page}`;
+            let url = `/finapp/api/transactions?per_page=50&page=${page}`;
             
             if (startDate) url += '&start_date=' + startDate;
             if (endDate) url += '&end_date=' + endDate;
@@ -453,7 +454,7 @@
         // 加载交易信息用于编辑
         async function loadTransactionForEdit(id) {
             try {
-                const response = await fetch('/api/transactions/' + id);
+                const response = await fetch('/finapp/api/transactions/' + id);
                 if (response.ok) {
                     const transaction = await response.json();
                     openEditModal(transaction);
@@ -492,8 +493,9 @@
             delete data.id;
             
             try {
-                const response = await fetch(`/api/transactions/${id}`, {
+                const response = await fetch(`/finapp/api/transactions/${id}`, {
                     method: 'PUT',
+                    credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json'
                     },
