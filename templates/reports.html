@@ -9,7 +9,7 @@
             return confirm('确定要注销吗？注销后将需要重新登录。');
         }
     </script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=10?v=10">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=12">
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/zui@1.11.0/dist/css/zui.min.css">
     <script src="https://cdn.jsdelivr.net/npm/zui@1.11.0/dist/js/zui.min.js"></script>
@@ -255,7 +255,7 @@
         </main>
     </div>
 
-    <script src="{{ url_for('static', filename='js/reports.js') }}?v=10?v=10"></script>
+    <script src="{{ url_for('static', filename='js/reports.js') }}?v=12"></script>
     <script>
         // ECharts 图表实例
         let yearlyChart = null;
@@ -379,22 +379,16 @@
             // 收入饼图
             if (monthlyIncomeChart) {
                 monthlyIncomeChart.setOption({
-                    tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
-                    legend: { orient: 'vertical', left: 'left', top: 'center' },
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: '{b}: ¥{c}' },
+                    legend: { orient: 'horizontal', left: 'center', top: 'top' },
+                    grid: { left: '3%', right: '8%', bottom: '3%', top: '15%', containLabel: true },
+                    xAxis: { type: 'value' },
+                    yAxis: { type: 'category', data: incomePieData.map(d => d.name), axisLabel: { interval: 0 } },
                     series: [{
-                        type: 'pie',
-                        radius: ['40%', '70%'],
-                        avoidLabelOverlap: false,
-                        itemStyle: {
-                            borderRadius: 10,
-                            borderColor: '#fff',
-                            borderWidth: 2
-                        },
-                        label: { show: false, position: 'center' },
-                        emphasis: {
-                            label: { show: true, fontSize: 16, fontWeight: 'bold' }
-                        },
-                        data: incomePieData.length ? incomePieData : [{ name: '无数据', value: 0 }]
+                        type: 'bar',
+                        data: incomePieData.map(d => d.value),
+                        itemStyle: { color: '#19be6b', borderRadius: [0, 4, 4, 0] },
+                        label: { show: true, position: 'right', formatter: '¥{c}', fontSize: 11 }
                     }]
                 });
             }
@@ -402,22 +396,16 @@
             // 支出饼图
             if (monthlyExpenseChart) {
                 monthlyExpenseChart.setOption({
-                    tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
-                    legend: { orient: 'vertical', left: 'left', top: 'center' },
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: '{b}: ¥{c}' },
+                    legend: { orient: 'horizontal', left: 'center', top: 'top' },
+                    grid: { left: '3%', right: '8%', bottom: '3%', top: '15%', containLabel: true },
+                    xAxis: { type: 'value' },
+                    yAxis: { type: 'category', data: expensePieData.map(d => d.name), axisLabel: { interval: 0 } },
                     series: [{
-                        type: 'pie',
-                        radius: ['40%', '70%'],
-                        avoidLabelOverlap: false,
-                        itemStyle: {
-                            borderRadius: 10,
-                            borderColor: '#fff',
-                            borderWidth: 2
-                        },
-                        label: { show: false, position: 'center' },
-                        emphasis: {
-                            label: { show: true, fontSize: 16, fontWeight: 'bold' }
-                        },
-                        data: expensePieData.length ? expensePieData : [{ name: '无数据', value: 0 }]
+                        type: 'bar',
+                        data: expensePieData.map(d => d.value),
+                        itemStyle: { color: '#ed4014', borderRadius: [0, 4, 4, 0] },
+                        label: { show: true, position: 'right', formatter: '¥{c}', fontSize: 11 }
                     }]
                 });
             }
@@ -497,15 +485,19 @@
             if (incomePieChart) {
                 incomePieChart.setOption({
                     title: { text: `${year}年收入分类`, left: 'center' },
-                    tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: '{b}: ¥{c}' },
+                    grid: { left: '3%', right: '12%', bottom: '3%', top: '15%', containLabel: true },
+                    xAxis: { type: 'value' },
+                    yAxis: { type: 'category', data: ['工资', '理财', '其他'], axisLabel: { interval: 0 } },
                     series: [{
-                        type: 'pie',
-                        radius: ['40%', '70%'],
+                        type: 'bar',
                         data: [
-                            { value: data.total_income * 0.6, name: '工资' },
-                            { value: data.total_income * 0.2, name: '理财' },
-                            { value: data.total_income * 0.2, name: '其他' }
-                        ]
+                            data.total_income * 0.6,
+                            data.total_income * 0.2,
+                            data.total_income * 0.2
+                        ],
+                        itemStyle: { color: '#19be6b', borderRadius: [0, 4, 4, 0] },
+                        label: { show: true, position: 'right', formatter: '¥{c}', fontSize: 11 }
                     }]
                 });
             }
@@ -514,17 +506,21 @@
             if (expensePieChart) {
                 expensePieChart.setOption({
                     title: { text: `${year}年支出分类`, left: 'center' },
-                    tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: '{b}: ¥{c}' },
+                    grid: { left: '3%', right: '12%', bottom: '3%', top: '15%', containLabel: true },
+                    xAxis: { type: 'value' },
+                    yAxis: { type: 'category', data: ['餐饮', '交通', '购物', '住房', '其他'], axisLabel: { interval: 0 } },
                     series: [{
-                        type: 'pie',
-                        radius: ['40%', '70%'],
+                        type: 'bar',
                         data: [
-                            { value: data.total_expense * 0.3, name: '餐饮' },
-                            { value: data.total_expense * 0.2, name: '交通' },
-                            { value: data.total_expense * 0.15, name: '购物' },
-                            { value: data.total_expense * 0.15, name: '住房' },
-                            { value: data.total_expense * 0.2, name: '其他' }
-                        ]
+                            data.total_expense * 0.3,
+                            data.total_expense * 0.2,
+                            data.total_expense * 0.15,
+                            data.total_expense * 0.15,
+                            data.total_expense * 0.2
+                        ],
+                        itemStyle: { color: '#ed4014', borderRadius: [0, 4, 4, 0] },
+                        label: { show: true, position: 'right', formatter: '¥{c}', fontSize: 11 }
                     }]
                 });
             }
@@ -595,25 +591,35 @@
             const expensePieData = Object.entries(expenseCategories).map(([name, value]) => ({ name, value }));
             
             if (incomePieChart) {
+                const sortedIncomeData = [...incomePieData].sort((a, b) => b.value - a.value);
                 incomePieChart.setOption({
                     title: { text: `${year}年${month}月收入分类`, left: 'center' },
-                    tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: '{b}: ¥{c}' },
+                    grid: { left: '3%', right: '12%', bottom: '3%', top: '15%', containLabel: true },
+                    xAxis: { type: 'value' },
+                    yAxis: { type: 'category', data: (sortedIncomeData.length ? sortedIncomeData : [{ name: '无数据', value: 0 }]).map(d => d.name), axisLabel: { interval: 0 } },
                     series: [{
-                        type: 'pie',
-                        radius: ['40%', '70%'],
-                        data: incomePieData.length ? incomePieData : [{ name: '无数据', value: 0 }]
+                        type: 'bar',
+                        data: (sortedIncomeData.length ? sortedIncomeData : [{ name: '无数据', value: 0 }]).map(d => d.value),
+                        itemStyle: { color: '#19be6b', borderRadius: [0, 4, 4, 0] },
+                        label: { show: true, position: 'right', formatter: '¥{c}', fontSize: 11 }
                     }]
                 });
             }
             
             if (expensePieChart) {
+                const sortedExpenseData = [...expensePieData].sort((a, b) => b.value - a.value);
                 expensePieChart.setOption({
                     title: { text: `${year}年${month}月支出分类`, left: 'center' },
-                    tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: '{b}: ¥{c}' },
+                    grid: { left: '3%', right: '12%', bottom: '3%', top: '15%', containLabel: true },
+                    xAxis: { type: 'value' },
+                    yAxis: { type: 'category', data: (sortedExpenseData.length ? sortedExpenseData : [{ name: '无数据', value: 0 }]).map(d => d.name), axisLabel: { interval: 0 } },
                     series: [{
-                        type: 'pie',
-                        radius: ['40%', '70%'],
-                        data: expensePieData.length ? expensePieData : [{ name: '无数据', value: 0 }]
+                        type: 'bar',
+                        data: (sortedExpenseData.length ? sortedExpenseData : [{ name: '无数据', value: 0 }]).map(d => d.value),
+                        itemStyle: { color: '#ed4014', borderRadius: [0, 4, 4, 0] },
+                        label: { show: true, position: 'right', formatter: '¥{c}', fontSize: 11 }
                     }]
                 });
             }
