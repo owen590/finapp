@@ -157,17 +157,18 @@ main {
 }
 
 .stat-value {
-    font-size: 28px;
+    font-size: 20px;
     font-weight: 700;
     margin-bottom: 8px;
     color: #374151;
-    text-align: right;
+    text-align: center;
 }
 
 .stat-label {
     color: #6b7280;
     font-size: 14px;
     font-weight: 500;
+    text-align: center;
 }
 
 .filter-controls {
@@ -239,7 +240,7 @@ table th {
     text-align: left;
     font-weight: 600;
     color: #374151;
-    text-align: right;
+    
     border-bottom: 2px solid #e5e7eb;
     font-size: 13px;
     text-transform: uppercase;
@@ -315,7 +316,7 @@ table td:nth-child(4) {
 table th:nth-child(5),
 table td:nth-child(5) {
     width: 12%;
-    text-align: right;
+    
     font-weight: 600;
     white-space: nowrap;
 }
@@ -334,7 +335,7 @@ table td:nth-child(6) {
 table th:nth-child(7),
 table td:nth-child(7) {
     width: 14%;
-    text-align: right;
+    
 }
 
 /* 操作按钮样式 */
@@ -481,7 +482,7 @@ footer p {
     padding: 6px 12px;
     background: #f3f4f6;
     color: #374151;
-    text-align: right;
+    
     border: 1px solid #d1d5db;
     border-radius: 4px;
     cursor: pointer;

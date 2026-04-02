@@ -22,7 +22,7 @@
             <nav>
                 <a href="{{ url_for('index') }}" class="active">首页</a>
                 <a href="{{ url_for('entry') }}">录入</a>
-                <a href="{{ url_for('accounts_page') }}">账户资产</a>
+                <a href="{{ url_for('accounts_page') }}">账户</a>
                 <a href="{{ url_for('reports') }}">报表</a>
                 <a href="{{ url_for('export') }}">导出</a>
                 {% if current_user.is_authenticated %}
