@@ -468,10 +468,10 @@
             
             if (yearlyTrendChart) {
                 yearlyTrendChart.setOption({
-                    title: { text: `${year}年收支趋势分析`, left: 'center' },
+                    title: { text: `${year}年收支趋势分析`, left: 'center', top: 5 },
                     tooltip: { trigger: 'axis' },
-                    legend: { data: ['收入', '支出', '累计结余'], top: 40 },
-                    grid: { top: 60 },
+                    legend: { data: ['收入', '支出', '累计结余'], top: 50 },
+                    grid: { top: 90 },
                     xAxis: { type: 'category', data: months },
                     yAxis: { type: 'value' },
                     series: [
@@ -560,10 +560,10 @@
             
             if (yearlyTrendChart) {
                 yearlyTrendChart.setOption({
-                    title: { text: `${year}年${month}月收支趋势分析`, left: 'center' },
+                    title: { text: `${year}年${month}月收支趋势分析`, left: 'center', top: 5 },
                     tooltip: { trigger: 'axis' },
-                    legend: { data: ['收入', '支出', '累计结余'], top: 40 },
-                    grid: { top: 60 },
+                    legend: { data: ['收入', '支出', '累计结余'], top: 50 },
+                    grid: { top: 90 },
                     xAxis: { type: 'category', data: days },
                     yAxis: { type: 'value' },
                     series: [
