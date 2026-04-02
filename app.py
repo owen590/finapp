@@ -25,48 +25,48 @@ login_manager.login_message_category = 'info'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-@app.route('/')
+@app.route('/finapp/')
 @login_required
 def index():
     return render_template('index.html')
 
-@app.route('/accounts')
+@app.route('/finapp/accounts')
 @login_required
 def accounts_page():
     return render_template('accounts.html')
 
-@app.route('/ledger')
+@app.route('/finapp/ledger')
 @login_required
 def ledger():
     return render_template('ledger.html')
 
-@app.route('/monthly')
+@app.route('/finapp/monthly')
 @login_required
 def monthly():
     return render_template('monthly.html')
 
-@app.route('/import')
+@app.route('/finapp/import')
 @login_required
 def import_page():
     return render_template('import.html')
 
-@app.route('/entry')
+@app.route('/finapp/entry')
 @login_required
 def entry():
     return render_template('entry.html')
 
-@app.route('/reports')
+@app.route('/finapp/reports')
 @login_required
 def reports():
     return render_template('reports.html')
 
-@app.route('/export')
+@app.route('/finapp/export')
 @login_required
 def export():
     return render_template('export.html')
 
 # 登录路由
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/finapp/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
@@ -86,7 +86,7 @@ def login():
     return render_template('login.html')
 
 # 注销路由
-@app.route('/logout')
+@app.route('/finapp/logout')
 @login_required
 def logout():
     logout_user()
@@ -94,13 +94,13 @@ def logout():
     return redirect(url_for('login'))
 
 # 用户管理路由
-@app.route('/users')
+@app.route('/finapp/users')
 @login_required
 def users():
     users = User.query.all()
     return render_template('users.html', users=users)
 
-@app.route('/users/create', methods=['POST'])
+@app.route('/finapp/users/create', methods=['POST'])
 @login_required
 def create_user():
     username = request.form['username']
@@ -122,7 +122,7 @@ def create_user():
     flash('用户创建成功', 'success')
     return redirect(url_for('users'))
 
-@app.route('/users/update', methods=['POST'])
+@app.route('/finapp/users/update', methods=['POST'])
 @login_required
 def update_user():
     user_id = request.form['id']
@@ -150,7 +150,7 @@ def update_user():
     flash('用户更新成功', 'success')
     return redirect(url_for('users'))
 
-@app.route('/users/delete/<int:id>')
+@app.route('/finapp/users/delete/<int:id>')
 @login_required
 def delete_user(id):
     user = User.query.get(id)
@@ -168,7 +168,7 @@ def delete_user(id):
     flash('用户删除成功', 'success')
     return redirect(url_for('users'))
 
-@app.route('/api/export', methods=['GET'])
+@app.route('/finapp/api/export', methods=['GET'])
 @login_required
 def export_transactions():
     transaction_type = request.args.get('type')
@@ -190,7 +190,7 @@ def export_transactions():
         'transactions': [t.to_dict() for t in transactions]
     })
 
-@app.route('/api/transactions', methods=['GET'])
+@app.route('/finapp/api/transactions', methods=['GET'])
 @login_required
 def get_transactions():
     page = request.args.get('page', 1, type=int)
@@ -225,7 +225,7 @@ def get_transactions():
         'current_page': page
     })
 
-@app.route('/api/transactions', methods=['POST'])
+@app.route('/finapp/api/transactions', methods=['POST'])
 @login_required
 def create_transaction():
     data = request.json
@@ -286,13 +286,13 @@ def create_transaction():
     
     return jsonify(transaction.to_dict()), 201
 
-@app.route('/api/transactions/<int:id>', methods=['GET'])
+@app.route('/finapp/api/transactions/<int:id>', methods=['GET'])
 @login_required
 def get_transaction(id):
     transaction = Transaction.query.get_or_404(id)
     return jsonify(transaction.to_dict())
 
-@app.route('/api/transactions/<int:id>', methods=['PUT'])
+@app.route('/finapp/api/transactions/<int:id>', methods=['PUT'])
 @login_required
 def update_transaction(id):
     transaction = Transaction.query.get_or_404(id)
@@ -370,7 +370,7 @@ def update_transaction(id):
     
     return jsonify(transaction.to_dict())
 
-@app.route('/api/transactions/<int:id>', methods=['DELETE'])
+@app.route('/finapp/api/transactions/<int:id>', methods=['DELETE'])
 @login_required
 def delete_transaction(id):
     transaction = Transaction.query.get_or_404(id)
@@ -396,13 +396,13 @@ def delete_transaction(id):
     
     return jsonify({'message': '删除成功'})
 
-@app.route('/api/distributions', methods=['GET'])
+@app.route('/finapp/api/distributions', methods=['GET'])
 @login_required
 def get_distributions():
     distributions = Distribution.query.order_by(Distribution.date.desc()).all()
     return jsonify([d.to_dict() for d in distributions])
 
-@app.route('/api/distributions', methods=['POST'])
+@app.route('/finapp/api/distributions', methods=['POST'])
 @login_required
 def create_distribution():
     data = request.json
@@ -420,13 +420,13 @@ def create_distribution():
     
     return jsonify(distribution.to_dict()), 201
 
-@app.route('/api/loans', methods=['GET'])
+@app.route('/finapp/api/loans', methods=['GET'])
 @login_required
 def get_loans():
     loans = Loan.query.order_by(Loan.date.desc()).all()
     return jsonify([l.to_dict() for l in loans])
 
-@app.route('/api/loans', methods=['POST'])
+@app.route('/finapp/api/loans', methods=['POST'])
 @login_required
 def create_loan():
     data = request.json
@@ -445,7 +445,7 @@ def create_loan():
     
     return jsonify(loan.to_dict()), 201
 
-@app.route('/api/loans/<int:id>', methods=['PUT'])
+@app.route('/finapp/api/loans/<int:id>', methods=['PUT'])
 @login_required
 def update_loan(id):
     loan = Loan.query.get_or_404(id)
@@ -460,7 +460,7 @@ def update_loan(id):
     
     return jsonify(loan.to_dict())
 
-@app.route('/api/loans/<int:id>', methods=['DELETE'])
+@app.route('/finapp/api/loans/<int:id>', methods=['DELETE'])
 @login_required
 def delete_loan(id):
     loan = Loan.query.get_or_404(id)
@@ -469,13 +469,13 @@ def delete_loan(id):
     
     return jsonify({'message': '删除成功'})
 
-@app.route('/api/capital', methods=['GET'])
+@app.route('/finapp/api/capital', methods=['GET'])
 @login_required
 def get_capital():
     capital = Capital.query.order_by(Capital.date.desc()).all()
     return jsonify([c.to_dict() for c in capital])
 
-@app.route('/api/capital', methods=['POST'])
+@app.route('/finapp/api/capital', methods=['POST'])
 @login_required
 def create_capital():
     data = request.json
@@ -494,7 +494,7 @@ def create_capital():
     
     return jsonify(capital.to_dict()), 201
 
-@app.route('/api/capital/<int:id>', methods=['PUT'])
+@app.route('/finapp/api/capital/<int:id>', methods=['PUT'])
 @login_required
 def update_capital(id):
     capital = Capital.query.get_or_404(id)
@@ -513,7 +513,7 @@ def update_capital(id):
     
     return jsonify(capital.to_dict())
 
-@app.route('/api/capital/<int:id>', methods=['DELETE'])
+@app.route('/finapp/api/capital/<int:id>', methods=['DELETE'])
 @login_required
 def delete_capital(id):
     capital = Capital.query.get_or_404(id)
@@ -522,7 +522,7 @@ def delete_capital(id):
     
     return jsonify({'message': '删除成功'})
 
-@app.route('/api/statistics', methods=['GET'])
+@app.route('/finapp/api/statistics', methods=['GET'])
 @login_required
 def get_statistics():
     start_date = request.args.get('start_date', type=str)
@@ -557,13 +557,13 @@ def get_statistics():
     })
 
 # ----------- 账户资产 API -----------
-@app.route('/api/accounts', methods=['GET'])
+@app.route('/finapp/api/accounts', methods=['GET'])
 @login_required
 def get_accounts():
     accounts = Account.query.order_by(Account.id.desc()).all()
     return jsonify([a.to_dict() for a in accounts])
 
-@app.route('/api/accounts', methods=['POST'])
+@app.route('/finapp/api/accounts', methods=['POST'])
 @login_required
 def create_account():
     data = request.json
@@ -590,13 +590,13 @@ def create_account():
     
     return jsonify(account.to_dict()), 201
 
-@app.route('/api/accounts/<int:id>', methods=['GET'])
+@app.route('/finapp/api/accounts/<int:id>', methods=['GET'])
 @login_required
 def get_account(id):
     account = Account.query.get_or_404(id)
     return jsonify(account.to_dict())
 
-@app.route('/api/accounts/<int:id>', methods=['PUT'])
+@app.route('/finapp/api/accounts/<int:id>', methods=['PUT'])
 @login_required
 def update_account(id):
     account = Account.query.get_or_404(id)
@@ -617,7 +617,7 @@ def update_account(id):
     db.session.commit()
     return jsonify(account.to_dict())
 
-@app.route('/api/accounts/<int:id>', methods=['DELETE'])
+@app.route('/finapp/api/accounts/<int:id>', methods=['DELETE'])
 @login_required
 def delete_account(id):
     account = Account.query.get_or_404(id)
@@ -630,7 +630,7 @@ def delete_account(id):
     db.session.commit()
     return jsonify({'message': '删除成功'})
 
-@app.route('/api/accounts/recalculate', methods=['POST'])
+@app.route('/finapp/api/accounts/recalculate', methods=['POST'])
 @login_required
 def recalculate_account_balances():
     """重新计算所有账户余额"""
@@ -646,7 +646,7 @@ def recalculate_account_balances():
     return jsonify({'message': '余额重算完成'})
 
 # ----------- 数据管理 API -----------
-@app.route('/api/clear-data', methods=['POST'])
+@app.route('/finapp/api/clear-data', methods=['POST'])
 @login_required
 def clear_all_data():
     """清空所有交易数据（保留账户和用户）"""
@@ -663,7 +663,7 @@ def clear_all_data():
     
     return jsonify({'message': '所有交易数据已清空，账户余额已重置'})
 
-@app.route('/api/clear-accounts', methods=['POST'])
+@app.route('/finapp/api/clear-accounts', methods=['POST'])
 @login_required
 def clear_accounts():
     """清空所有账户"""
@@ -672,7 +672,7 @@ def clear_accounts():
     db.session.commit()
     return jsonify({'message': '所有账户和交易数据已清空'})
 
-@app.route('/api/import', methods=['POST'])
+@app.route('/finapp/api/import', methods=['POST'])
 @login_required
 def import_excel():
     if 'file' not in request.files:
@@ -715,7 +715,7 @@ def import_excel():
         return jsonify({'error': str(e)}), 500
 
 # 报表API
-@app.route('/api/reports', methods=['GET'])
+@app.route('/finapp/api/reports', methods=['GET'])
 @login_required
 def get_reports():
     report_type = request.args.get('type', type=str)
@@ -904,7 +904,7 @@ def get_yearly_report(year):
     })
 
 # PDF导出API
-@app.route('/api/export-pdf', methods=['POST'])
+@app.route('/finapp/api/export-pdf', methods=['POST'])
 @login_required
 def export_pdf():
     data = request.json
@@ -1265,9 +1265,5 @@ if __name__ == '__main__':
             print('默认管理员用户已创建: username=admin, password=admin123')
     import os
     port = int(os.environ.get('PORT', 5000))
-    script_name = os.environ.get('SCRIPT_NAME', '/finapp')
-    
-    from werkzeug.middleware.dispatcher import DispatcherMiddleware
-    app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {script_name: app})
     
     app.run(debug=True, host='0.0.0.0', port=port)

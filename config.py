@@ -10,6 +10,6 @@ class Config:
 
     # URL prefix for /finapp path
     SCRIPT_NAME = os.environ.get('SCRIPT_NAME', '/finapp')
-    SESSION_COOKIE_PATH = '/'
+    FORCE_SCRIPT_NAME = '/finapp'
+    SESSION_COOKIE_PATH = '/finapp'
     APPLICATION_ROOT = '/finapp'
-    PREFERRED_URL_SCHEME = None  # let Flask infer from environ
