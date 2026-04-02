@@ -5,6 +5,28 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
 
+class Account(db.Model):
+    __tablename__ = 'accounts'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False, unique=True)  # 账户名称
+    account_type = db.Column(db.String(50))  # 账户类型：银行/微信/支付宝/现金/其他
+    initial_balance = db.Column(db.Float, default=0)  # 期初余额
+    current_balance = db.Column(db.Float, default=0)  # 当前余额
+    remark = db.Column(db.Text)  # 备注
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'account_type': self.account_type,
+            'initial_balance': self.initial_balance,
+            'current_balance': self.current_balance,
+            'remark': self.remark,
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        }
+
 class Transaction(db.Model):
     __tablename__ = 'transactions'
     
@@ -17,6 +39,8 @@ class Transaction(db.Model):
     remark = db.Column(db.Text)  # 备注
     month = db.Column(db.Integer)
     year = db.Column(db.Integer)
+    account_id = db.Column(db.Integer, db.ForeignKey('accounts.id'))  # 账户
+    bitable_record_id = db.Column(db.String(100))  # 飞书多维表格记录ID
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def to_dict(self):
@@ -30,6 +54,8 @@ class Transaction(db.Model):
             'remark': self.remark,
             'month': self.month,
             'year': self.year,
+            'account_id': self.account_id,
+            'bitable_record_id': self.bitable_record_id,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S')
         }
 

@@ -2,8 +2,9 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, f
 from flask_cors import CORS
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from config import Config
-from models import Transaction, Loan, Distribution, Capital, User, db
+from models import Transaction, Loan, Distribution, Capital, User, Account, db
 from utils import import_from_excel, import_from_csv
+from sync import sync_transaction_to_feishu, update_feishu_transaction_record, delete_feishu_transaction_record, sync_account_to_feishu, update_feishu_account_record
 from datetime import datetime, date, timedelta
 import os
 
@@ -28,6 +29,11 @@ def load_user(user_id):
 @login_required
 def index():
     return render_template('index.html')
+
+@app.route('/accounts')
+@login_required
+def accounts_page():
+    return render_template('accounts.html')
 
 @app.route('/ledger')
 @login_required
@@ -234,11 +240,47 @@ def create_transaction():
         description=data.get('description', ''),
         remark=data.get('remark', ''),
         month=date.month,
-        year=date.year
+        year=date.year,
+        account_id=data.get('account_id')
     )
     
     db.session.add(transaction)
+    db.session.flush()
+    
+    # 更新账户余额
+    if transaction.account_id:
+        account = Account.query.get(transaction.account_id)
+        if account:
+            if transaction.type == '入账':
+                account.current_balance += transaction.amount
+            else:
+                account.current_balance -= transaction.amount
+    
     db.session.commit()
+    
+    # 同步到飞书
+    try:
+        account_name = ""
+        if transaction.account_id:
+            account = Account.query.get(transaction.account_id)
+            if account:
+                account_name = account.name
+        
+        t_dict = {
+            "date": data['date'],
+            "type": transaction.type,
+            "category": transaction.category,
+            "description": transaction.description,
+            "amount": transaction.amount,
+            "remark": transaction.remark,
+            "account_name": account_name
+        }
+        record_id = sync_transaction_to_feishu(t_dict)
+        if record_id:
+            transaction.bitable_record_id = record_id
+            db.session.commit()
+    except Exception as e:
+        print(f"飞书同步失败: {e}")
     
     return jsonify(transaction.to_dict()), 201
 
@@ -253,6 +295,11 @@ def get_transaction(id):
 def update_transaction(id):
     transaction = Transaction.query.get_or_404(id)
     data = request.json
+    
+    # 记录旧值，用于余额调整
+    old_amount = transaction.amount
+    old_type = transaction.type
+    old_account_id = transaction.account_id
     
     if 'date' in data:
         date = datetime.strptime(data['date'], '%Y-%m-%d').date()
@@ -270,8 +317,51 @@ def update_transaction(id):
         transaction.description = data['description']
     if 'remark' in data:
         transaction.remark = data['remark']
+    if 'account_id' in data:
+        transaction.account_id = data['account_id']
+    
+    # 重新计算账户余额
+    # 1. 恢复旧账户的余额
+    if old_account_id:
+        old_account = Account.query.get(old_account_id)
+        if old_account:
+            if old_type == '入账':
+                old_account.current_balance -= old_amount
+            else:
+                old_account.current_balance += old_amount
+    
+    # 2. 应用新账户的余额变动
+    if transaction.account_id:
+        new_account = Account.query.get(transaction.account_id)
+        if new_account:
+            if transaction.type == '入账':
+                new_account.current_balance += transaction.amount
+            else:
+                new_account.current_balance -= transaction.amount
     
     db.session.commit()
+    
+    # 同步到飞书
+    try:
+        account_name = ""
+        if transaction.account_id:
+            account = Account.query.get(transaction.account_id)
+            if account:
+                account_name = account.name
+        
+        t_dict = {
+            "date": transaction.date.strftime('%Y-%m-%d'),
+            "type": transaction.type,
+            "category": transaction.category,
+            "description": transaction.description,
+            "amount": transaction.amount,
+            "remark": transaction.remark,
+            "account_name": account_name
+        }
+        if transaction.bitable_record_id:
+            update_feishu_transaction_record(transaction.bitable_record_id, t_dict)
+    except Exception as e:
+        print(f"飞书同步失败: {e}")
     
     return jsonify(transaction.to_dict())
 
@@ -279,6 +369,23 @@ def update_transaction(id):
 @login_required
 def delete_transaction(id):
     transaction = Transaction.query.get_or_404(id)
+    
+    # 更新账户余额
+    if transaction.account_id:
+        account = Account.query.get(transaction.account_id)
+        if account:
+            if transaction.type == '入账':
+                account.current_balance -= transaction.amount
+            else:
+                account.current_balance += transaction.amount
+    
+    # 删除飞书记录
+    if transaction.bitable_record_id:
+        try:
+            delete_feishu_transaction_record(transaction.bitable_record_id)
+        except Exception as e:
+            print(f"飞书删除失败: {e}")
+    
     db.session.delete(transaction)
     db.session.commit()
     
@@ -443,6 +550,122 @@ def get_statistics():
         'balance': total_income - total_expense,
         'transaction_count': len(transactions)
     })
+
+# ----------- 账户资产 API -----------
+@app.route('/api/accounts', methods=['GET'])
+@login_required
+def get_accounts():
+    accounts = Account.query.order_by(Account.id.desc()).all()
+    return jsonify([a.to_dict() for a in accounts])
+
+@app.route('/api/accounts', methods=['POST'])
+@login_required
+def create_account():
+    data = request.json
+    
+    account = Account(
+        name=data['name'],
+        account_type=data.get('account_type', ''),
+        initial_balance=float(data.get('initial_balance', 0)),
+        current_balance=float(data.get('initial_balance', 0)),
+        remark=data.get('remark', '')
+    )
+    
+    db.session.add(account)
+    db.session.commit()
+    
+    # 同步到飞书
+    try:
+        record_id = sync_account_to_feishu(account.to_dict())
+        if record_id:
+            # 保存飞书记录ID需要扩展account模型，这里只打印
+            print(f"飞书账户同步成功: {record_id}")
+    except Exception as e:
+        print(f"飞书账户同步失败: {e}")
+    
+    return jsonify(account.to_dict()), 201
+
+@app.route('/api/accounts/<int:id>', methods=['GET'])
+@login_required
+def get_account(id):
+    account = Account.query.get_or_404(id)
+    return jsonify(account.to_dict())
+
+@app.route('/api/accounts/<int:id>', methods=['PUT'])
+@login_required
+def update_account(id):
+    account = Account.query.get_or_404(id)
+    data = request.json
+    
+    if 'name' in data:
+        account.name = data['name']
+    if 'account_type' in data:
+        account.account_type = data['account_type']
+    if 'remark' in data:
+        account.remark = data['remark']
+    if 'initial_balance' in data:
+        # 调整初始余额变化对当前余额的影响
+        diff = float(data['initial_balance']) - account.initial_balance
+        account.initial_balance = float(data['initial_balance'])
+        account.current_balance += diff
+    
+    db.session.commit()
+    return jsonify(account.to_dict())
+
+@app.route('/api/accounts/<int:id>', methods=['DELETE'])
+@login_required
+def delete_account(id):
+    account = Account.query.get_or_404(id)
+    
+    # 检查是否有关联交易
+    if Transaction.query.filter_by(account_id=id).first():
+        return jsonify({'error': '该账户有关联交易，无法删除'}), 400
+    
+    db.session.delete(account)
+    db.session.commit()
+    return jsonify({'message': '删除成功'})
+
+@app.route('/api/accounts/recalculate', methods=['POST'])
+@login_required
+def recalculate_account_balances():
+    """重新计算所有账户余额"""
+    for account in Account.query.all():
+        balance = account.initial_balance
+        for t in Transaction.query.filter_by(account_id=account.id).order_by(Transaction.date):
+            if t.type == '入账':
+                balance += t.amount
+            else:
+                balance -= t.amount
+        account.current_balance = balance
+    db.session.commit()
+    return jsonify({'message': '余额重算完成'})
+
+# ----------- 数据管理 API -----------
+@app.route('/api/clear-data', methods=['POST'])
+@login_required
+def clear_all_data():
+    """清空所有交易数据（保留账户和用户）"""
+    Transaction.query.delete()
+    Loan.query.delete()
+    Distribution.query.delete()
+    Capital.query.delete()
+    db.session.commit()
+    
+    # 重置账户余额为初始值
+    for account in Account.query.all():
+        account.current_balance = account.initial_balance
+    db.session.commit()
+    
+    return jsonify({'message': '所有交易数据已清空，账户余额已重置'})
+
+@app.route('/api/clear-accounts', methods=['POST'])
+@login_required
+def clear_accounts():
+    """清空所有账户"""
+    Transaction.query.delete()
+    Account.query.delete()
+    db.session.commit()
+    return jsonify({'message': '所有账户和交易数据已清空'})
 
 @app.route('/api/import', methods=['POST'])
 @login_required

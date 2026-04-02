@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>账户资产 - 财务系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/entry.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>财务系统</h1>
+            <nav>
+                <a href="/">首页</a>
+                <a href="/entry">录入</a>
+                <a href="/accounts" class="active">账户资产</a>
+                <a href="/reports">报表</a>
+                <a href="/export">导出</a>
+                {% if current_user.is_authenticated %}
+                <a href="/users">用户</a>
+                <a href="/logout" style="float: right;">注销</a>
+                <span style="float: right; margin-left: 20px; color: white;">欢迎，{{ current_user.username }}</span>
+                {% endif %}
+            </nav>
+        </header>
+
+        <main>
+            <section class="stats-section">
+                <h2>账户概览</h2>
+                <div class="stats-grid" id="accounts-overview">
+                </div>
+            </section>
+
+            <section class="entry-section">
+                <h2>账户列表</h2>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>账户名称</th>
+                                <th>类型</th>
+                                <th>期初余额</th>
+                                <th>当前余额</th>
+                                <th>备注</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="accounts-table">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="entry-card" style="margin-top: 30px;">
+                <h2 id="form-title">新增账户</h2>
+                <form id="account-form" class="entry-form">
+                    <input type="hidden" name="id" id="account-id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>账户名称 <span class="required">*</span></label>
+                            <input type="text" name="name" id="account-name" required placeholder="如：微信钱包、银行账户">
+                        </div>
+                        <div class="form-group">
+                            <label>账户类型</label>
+                            <select name="account_type" id="account-type">
+                                <option value="银行账户">银行账户</option>
+                                <option value="微信钱包">微信钱包</option>
+                                <option value="支付宝">支付宝</option>
+                                <option value="现金">现金</option>
+                                <option value="证券账户">证券账户</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>期初余额</label>
+                            <input type="number" name="initial_balance" id="account-initial" step="0.01" value="0" placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label>备注</label>
+                            <input type="text" name="remark" id="account-remark" placeholder="选填">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary" id="submit-btn">添加账户</button>
+                        <button type="button" class="btn-secondary" onclick="resetForm()">重置</button>
+                        <button type="button" class="btn-secondary" onclick="recalculateBalances()" style="float:right; background:#e67e22;">重算余额</button>
+                    </div>
+                </form>
+            </section>
+
+            <section style="margin-top: 30px; background: #fff3cd; border-radius: 8px; padding: 20px;">
+                <h2 style="color: #856404;">⚠️ 数据管理</h2>
+                <p style="color: #856404; margin-bottom: 15px;">以下操作不可逆，请谨慎操作。</p>
+                <button onclick="clearTransactions()" class="btn btn-danger" style="margin-right: 10px;">清空所有交易记录</button>
+                <button onclick="clearAccounts()" class="btn btn-danger">清空所有账户和交易</button>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 财务系统</p>
+        </footer>
+    </div>
+
+    <!-- 编辑弹窗 -->
+    <div id="edit-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h2>编辑账户</h2>
+            <form id="edit-form" class="entry-form">
+                <input type="hidden" name="id" id="edit-id">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>账户名称 <span class="required">*</span></label>
+                        <input type="text" name="name" id="edit-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>账户类型</label>
+                        <select name="account_type" id="edit-type">
+                            <option value="银行账户">银行账户</option>
+                            <option value="微信钱包">微信钱包</option>
+                            <option value="支付宝">支付宝</option>
+                            <option value="现金">现金</option>
+                            <option value="证券账户">证券账户</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>期初余额</label>
+                        <input type="number" name="initial_balance" id="edit-initial" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>备注</label>
+                        <input type="text" name="remark" id="edit-remark">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">保存</button>
+                    <button type="button" class="btn-secondary" onclick="closeEditModal()">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        let accounts = [];
+
+        async function loadAccounts() {
+            try {
+                const resp = await fetch('/api/accounts');
+                accounts = await resp.json();
+                renderAccounts();
+                renderOverview();
+            } catch (e) {
+                showToast('加载账户失败', 'error');
+            }
+        }
+
+        function renderOverview() {
+            const total = accounts.reduce((sum, a) => sum + a.current_balance, 0);
+            const container = document.getElementById('accounts-overview');
+            
+            const typeGroups = {};
+            accounts.forEach(a => {
+                const t = a.account_type || '其他';
+                if (!typeGroups[t]) typeGroups[t] = 0;
+                typeGroups[t] += a.current_balance;
+            });
+
+            let html = `<div class="stat-card balance">
+                <div class="stat-value">¥${total.toFixed(2)}</div>
+                <div class="stat-label">总资产</div>
+            </div>`;
+            
+            for (const [type, amount] of Object.entries(typeGroups)) {
+                html += `<div class="stat-card income">
+                    <div class="stat-value">¥${amount.toFixed(2)}</div>
+                    <div class="stat-label">${type}</div>
+                </div>`;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function renderAccounts() {
+            const tbody = document.getElementById('accounts-table');
+            tbody.innerHTML = '';
+            
+            if (accounts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">暂无账户，请添加</td></tr>';
+                return;
+            }
+            
+            accounts.forEach(a => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${a.name}</strong></td>
+                    <td>${a.account_type || '-'}</td>
+                    <td>¥${a.initial_balance.toFixed(2)}</td>
+                    <td style="font-weight:bold;color:${a.current_balance >= 0 ? '#27ae60' : '#e74c3c'}">¥${a.current_balance.toFixed(2)}</td>
+                    <td>${a.remark || '-'}</td>
+                    <td>
+                        <button class="btn-primary btn-sm" onclick="editAccount(${a.id})">编辑</button>
+                        <button class="btn-danger btn-sm" onclick="deleteAccount(${a.id})">删除</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        document.getElementById('account-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            data.initial_balance = parseFloat(data.initial_balance) || 0;
+
+            const id = document.getElementById('account-id').value;
+            
+            try {
+                if (id) {
+                    await fetch(`/api/accounts/${id}`, {
+                        method: 'PUT',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(data)
+                    });
+                    showToast('账户更新成功');
+                } else {
+                    await fetch('/api/accounts', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(data)
+                    });
+                    showToast('账户添加成功');
+                }
+                resetForm();
+                loadAccounts();
+            } catch (e) {
+                showToast('操作失败', 'error');
+            }
+        });
+
+        function editAccount(id) {
+            const a = accounts.find(x => x.id === id);
+            if (!a) return;
+            
+            document.getElementById('account-id').value = a.id;
+            document.getElementById('account-name').value = a.name;
+            document.getElementById('account-type').value = a.account_type || '银行账户';
+            document.getElementById('account-initial').value = a.initial_balance;
+            document.getElementById('account-remark').value = a.remark || '';
+            document.getElementById('submit-btn').textContent = '更新账户';
+            document.getElementById('form-title').textContent = '编辑账户';
+            
+            document.getElementById('account-name').scrollIntoView({behavior: 'smooth'});
+        }
+
+        function resetForm() {
+            document.getElementById('account-form').reset();
+            document.getElementById('account-id').value = '';
+            document.getElementById('submit-btn').textContent = '添加账户';
+            document.getElementById('form-title').textContent = '新增账户';
+            document.getElementById('account-initial').value = '0';
+        }
+
+        async function deleteAccount(id) {
+            if (!confirm('确定删除该账户？删除后不可恢复。')) return;
+            try {
+                const resp = await fetch(`/api/accounts/${id}`, {method: 'DELETE'});
+                const data = await resp.json();
+                if (resp.ok) {
+                    showToast('删除成功');
+                    loadAccounts();
+                } else {
+                    showToast(data.error || '删除失败', 'error');
+                }
+            } catch (e) {
+                showToast('删除失败', 'error');
+            }
+        }
+
+        async function recalculateBalances() {
+            if (!confirm('确定要重算所有账户余额？')) return;
+            try {
+                await fetch('/api/accounts/recalculate', {method: 'POST'});
+                showToast('余额重算完成');
+                loadAccounts();
+            } catch (e) {
+                showToast('重算失败', 'error');
+            }
+        }
+
+        async function clearTransactions() {
+            if (!confirm('确定要清空所有交易记录？账户会保留，余额重置为期初值。此操作不可逆！')) return;
+            if (!confirm('再次确认：清空所有交易数据？')) return;
+            try {
+                await fetch('/api/clear-data', {method: 'POST'});
+                showToast('交易记录已清空');
+                loadAccounts();
+            } catch (e) {
+                showToast('操作失败', 'error');
+            }
+        }
+
+        async function clearAccounts() {
+            if (!confirm('确定要清空所有账户和交易数据？此操作不可逆！')) return;
+            if (!confirm('再次确认：删除所有账户和交易？')) return;
+            try {
+                await fetch('/api/clear-accounts', {method: 'POST'});
+                showToast('所有数据已清空');
+                loadAccounts();
+            } catch (e) {
+                showToast('操作失败', 'error');
+            }
+        }
+
+        function showToast(msg, type='success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast ' + type;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', loadAccounts);
+    </script>
+</body>
+</html>

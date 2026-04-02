@@ -23,6 +23,9 @@ function initEntryPage() {
         if (editForm) editForm.addEventListener('submit', handleEditSubmit);
         if (batchForm) batchForm.addEventListener('submit', handleBatchSubmit);
 
+        // 加载账户列表
+        loadAccountsForSelect();
+
         // 加载最近记录
         loadRecentTransactions();
         if (loanForm) loadRecentLoans();
@@ -30,6 +33,27 @@ function initEntryPage() {
         // 不再自动检查URL中的edit参数，编辑交易只通过点击按钮触发
     } catch (error) {
         console.error('initEntryPage执行错误:', error);
+    }
+}
+
+// 加载账户下拉选择
+async function loadAccountsForSelect() {
+    try {
+        const resp = await fetch('/api/accounts');
+        const accounts = await resp.json();
+        const select = document.getElementById('account-select');
+        if (!select) return;
+        
+        // 保留"请选择账户"选项
+        select.innerHTML = '<option value="">请选择账户</option>';
+        accounts.forEach(a => {
+            const opt = document.createElement('option');
+            opt.value = a.id;
+            opt.textContent = `${a.name}（余额: ¥${a.current_balance.toFixed(2)}）`;
+            select.appendChild(opt);
+        });
+    } catch (e) {
+        console.error('加载账户失败', e);
     }
 }
 
@@ -80,6 +104,11 @@ async function handleTransactionSubmit(e) {
     
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData);
+    
+    // 转换account_id为整数
+    if (data.account_id) {
+        data.account_id = parseInt(data.account_id);
+    }
     
     try {
         const response = await fetch('/api/transactions', {
@@ -254,7 +283,30 @@ function openEditModal(transaction) {
     document.querySelector('#edit-form textarea[name="description"]').value = transaction.description || '';
     document.querySelector('#edit-form textarea[name="remark"]').value = transaction.remark || '';
     
+    // 设置账户
+    loadAccountsForEditSelect(transaction.account_id);
+    
     document.getElementById('edit-modal').style.display = 'block';
+}
+
+async function loadAccountsForEditSelect(selectedId) {
+    try {
+        const resp = await fetch('/api/accounts');
+        const accounts = await resp.json();
+        const select = document.getElementById('edit-account-select');
+        if (!select) return;
+        
+        select.innerHTML = '<option value="">请选择账户</option>';
+        accounts.forEach(a => {
+            const opt = document.createElement('option');
+            opt.value = a.id;
+            opt.textContent = `${a.name}（余额: ¥${a.current_balance.toFixed(2)}）`;
+            if (a.id == selectedId) opt.selected = true;
+            select.appendChild(opt);
+        });
+    } catch (e) {
+        console.error('加载账户失败', e);
+    }
 }
 
 // 关闭编辑弹窗
@@ -270,6 +322,13 @@ async function handleEditSubmit(e) {
     const data = Object.fromEntries(formData);
     const id = data.id;
     delete data.id;
+    
+    // 转换account_id为整数
+    if (data.account_id) {
+        data.account_id = parseInt(data.account_id);
+    } else {
+        delete data.account_id;
+    }
     
     try {
         const response = await fetch(`/api/transactions/${id}`, {

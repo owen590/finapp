@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>恒驰泵业财务系统 - 数据导出</title>
+    <title>财务系统 - 数据导出</title>
     <script>
         function confirmLogout() {
             return confirm('确定要注销吗？注销后将需要重新登录。');
@@ -15,10 +15,11 @@
 <body>
     <div class="container">
         <header>
-            <h1>恒驰泵业财务系统</h1>
+            <h1>财务系统</h1>
             <nav>
                 <a href="/">首页</a>
                 <a href="/entry">数据录入</a>
+                <a href="/accounts">账户资产</a>
                 <a href="/reports">报表</a>
                 <a href="/export" class="active">数据导出</a>
                 {% if current_user.is_authenticated %}
@@ -96,7 +97,7 @@
         </main>
 
         <footer>
-            <p>&copy; 2025 恒驰泵业财务系统</p>
+            <p>&copy; 2025 财务系统</p>
         </footer>
     </div>
 
