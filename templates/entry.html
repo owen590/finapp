@@ -60,22 +60,29 @@
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>明细分类 <span class="required">*</span></label>
-                                    <input type="text" name="category" list="category-list" required placeholder="输入或选择类别">
-                                    <datalist id="category-list">
-                                        <option value="投资款">
-                                        <option value="货款">
-                                        <option value="电费">
-                                        <option value="快递费">
-                                        <option value="工资">
-                                        <option value="充值">
-                                        <option value="设备">
-                                        <option value="材料">
-                                        <option value="费用">
-                                        <option value="房租">
-                                        <option value="其他">
-                                    </datalist>
+                                    <label>大类 <span class="required">*</span></label>
+                                    <select name="category" id="category-select" required onchange="updateSubCategories()">
+                                        <option value="">请选择大类</option>
+                                        <option value="购物消费">购物消费</option>
+                                        <option value="食品餐饮">食品餐饮</option>
+                                        <option value="出行交通">出行交通</option>
+                                        <option value="休闲娱乐">休闲娱乐</option>
+                                        <option value="居家生活">居家生活</option>
+                                        <option value="文化教育">文化教育</option>
+                                        <option value="送礼人情">送礼人情</option>
+                                        <option value="健康医疗">健康医疗</option>
+                                        <option value="其他">其他</option>
+                                    </select>
                                 </div>
+                                <div class="form-group">
+                                    <label>明细 <span class="required">*</span></label>
+                                    <select name="sub_category" id="sub-category-select" required>
+                                        <option value="">请先选择大类</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
                                 <div class="form-group">
                                     <label>金额 <span class="required">*</span></label>
                                     <input type="number" name="amount" step="0.01" min="0" required placeholder="0.00">
@@ -214,28 +221,32 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>明细分类 <span class="required">*</span></label>
-                            <input type="text" name="category" list="category-list-edit" required placeholder="输入或选择类别">
-                            <datalist id="category-list-edit">
-                                <option value="投资款">
-                                <option value="货款">
-                                <option value="电费">
-                                <option value="快递费">
-                                <option value="工资">
-                                <option value="充值">
-                                <option value="设备">
-                                <option value="材料">
-                                <option value="费用">
-                                <option value="房租">
-                                <option value="其他">
-                            </datalist>
+                            <label>大类 <span class="required">*</span></label>
+                            <select name="category" id="edit-category-select" required onchange="updateEditSubCategories()">
+                                <option value="">请选择大类</option>
+                                <option value="购物消费">购物消费</option>
+                                <option value="食品餐饮">食品餐饮</option>
+                                <option value="出行交通">出行交通</option>
+                                <option value="休闲娱乐">休闲娱乐</option>
+                                <option value="居家生活">居家生活</option>
+                                <option value="文化教育">文化教育</option>
+                                <option value="送礼人情">送礼人情</option>
+                                <option value="健康医疗">健康医疗</option>
+                                <option value="其他">其他</option>
+                            </select>
                         </div>
+                        <div class="form-group">
+                            <label>明细 <span class="required">*</span></label>
+                            <select name="sub_category" id="edit-sub-category-select" required>
+                                <option value="">请先选择大类</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
                         <div class="form-group">
                             <label>金额 <span class="required">*</span></label>
                             <input type="number" name="amount" step="0.01" min="0" required>
                         </div>
-                    </div>
-                    <div class="form-row">
                         <div class="form-group">
                             <label>账户</label>
                             <select name="account_id" id="edit-account-select">

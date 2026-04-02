@@ -236,6 +236,7 @@ def create_transaction():
         date=date,
         type=data['type'],
         category=data.get('category', ''),
+        sub_category=data.get('sub_category', ''),
         amount=float(data['amount']),
         description=data.get('description', ''),
         remark=data.get('remark', ''),
@@ -270,6 +271,7 @@ def create_transaction():
             "date": data['date'],
             "type": transaction.type,
             "category": transaction.category,
+            "sub_category": transaction.sub_category,
             "description": transaction.description,
             "amount": transaction.amount,
             "remark": transaction.remark,
@@ -311,6 +313,8 @@ def update_transaction(id):
         transaction.type = data['type']
     if 'category' in data:
         transaction.category = data['category']
+    if 'sub_category' in data:
+        transaction.sub_category = data['sub_category']
     if 'amount' in data:
         transaction.amount = float(data['amount'])
     if 'description' in data:
@@ -353,6 +357,7 @@ def update_transaction(id):
             "date": transaction.date.strftime('%Y-%m-%d'),
             "type": transaction.type,
             "category": transaction.category,
+            "sub_category": transaction.sub_category,
             "description": transaction.description,
             "amount": transaction.amount,
             "remark": transaction.remark,

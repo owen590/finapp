@@ -33,7 +33,8 @@ class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.Date, nullable=False)
     type = db.Column(db.String(20), nullable=False)  # 收支分类：入账/出账
-    category = db.Column(db.String(100))  # 明细分类
+    category = db.Column(db.String(100))  # 大类分类
+    sub_category = db.Column(db.String(100))  # 明细分类
     description = db.Column(db.Text)  # 摘要
     amount = db.Column(db.Float, nullable=False)
     remark = db.Column(db.Text)  # 备注
@@ -49,6 +50,7 @@ class Transaction(db.Model):
             'date': self.date.strftime('%Y-%m-%d') if self.date else None,
             'type': self.type,
             'category': self.category,
+            'sub_category': self.sub_category,
             'description': self.description,
             'amount': self.amount,
             'remark': self.remark,
