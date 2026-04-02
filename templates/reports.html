@@ -470,7 +470,8 @@
                 yearlyTrendChart.setOption({
                     title: { text: `${year}年收支趋势分析`, left: 'center' },
                     tooltip: { trigger: 'axis' },
-                    legend: { data: ['收入', '支出', '累计结余'] },
+                    legend: { data: ['收入', '支出', '累计结余'], top: 40 },
+                    grid: { top: 60 },
                     xAxis: { type: 'category', data: months },
                     yAxis: { type: 'value' },
                     series: [
@@ -561,7 +562,8 @@
                 yearlyTrendChart.setOption({
                     title: { text: `${year}年${month}月收支趋势分析`, left: 'center' },
                     tooltip: { trigger: 'axis' },
-                    legend: { data: ['收入', '支出', '累计结余'] },
+                    legend: { data: ['收入', '支出', '累计结余'], top: 40 },
+                    grid: { top: 60 },
                     xAxis: { type: 'category', data: days },
                     yAxis: { type: 'value' },
                     series: [
