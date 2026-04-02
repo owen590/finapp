@@ -306,7 +306,7 @@
             
             for (const transaction of transactions) {
                 try {
-                    const response = await fetch('/api/transactions', {
+                    const response = await fetch('/finapp/api/transactions', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'

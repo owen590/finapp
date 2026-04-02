@@ -429,9 +429,9 @@
             const month = document.getElementById('chart-month').value;
             
             try {
-                let url = `/api/reports?type=yearly&year=${year}`;
+                let url = `/finapp/api/reports?type=yearly&year=${year}`;
                 if (month) {
-                    url = `/api/reports?type=monthly&year=${year}&month=${month}`;
+                    url = `/finapp/api/reports?type=monthly&year=${year}&month=${month}`;
                 }
                 
                 const response = await fetch(url);
@@ -656,9 +656,9 @@
                 }
                 
                 // 获取图表数据
-                let url = `/api/reports?type=yearly&year=${year}`;
+                let url = `/finapp/api/reports?type=yearly&year=${year}`;
                 if (month) {
-                    url = `/api/reports?type=monthly&year=${year}&month=${month}`;
+                    url = `/finapp/api/reports?type=monthly&year=${year}&month=${month}`;
                 }
                 
                 const response = await fetch(url);
@@ -681,7 +681,7 @@
                 };
                 
                 // 调用PDF导出API
-                const pdfResponse = await fetch('/api/export-pdf', {
+                const pdfResponse = await fetch('/finapp/api/export-pdf', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

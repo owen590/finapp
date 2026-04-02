@@ -158,7 +158,7 @@
             const year = document.getElementById('year-filter')?.value || '';
             const month = document.getElementById('month-filter')?.value || '';
             
-            let url = '/api/statistics';
+            let url = '/finapp/api/statistics';
             const params = [];
             if (type) params.push(`type=${type}`);
             if (year) params.push(`year=${year}`);
