@@ -288,7 +288,9 @@ def create_transaction():
     
     db.session.add(transaction)
     db.session.flush()
-    account.recalculate_balance()
+    account = Account.query.get(transaction.account_id)
+    if account:
+        account.recalculate_balance()
     db.session.commit()
     
     # 同步到飞书
